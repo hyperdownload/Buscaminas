@@ -15,6 +15,7 @@ class Minesweeper:
         self.frame.config(width=400, height=400)  # Configura el tamaño del marco
         self.navbar = Menu(self.root)
         self.root.config(menu=self.navbar)
+        self.transparent_image = PhotoImage(width=1, height=1)
 
         # Crea los elementos del menú
         self.file_menu = Menu(self.navbar, tearoff=0)
@@ -31,18 +32,18 @@ class Minesweeper:
         self.reset = False  # Inicializa una bandera para indicar si se ha reiniciado el juego
         self.inicio = False  # Inicializa una bandera para indicar si el juego ha comenzado
         self.tiempoInicio = time.time()  # Obtiene el tiempo actual al iniciar el juego
-        self.banderasDisponibles = 10  # Establece la cantidad de banderas disponibles al inicio del juego
+        self.flags = 0  # Establece la cantidad de banderas disponibles al inicio del juego
         self.bombas = []  # Inicializa una lista para almacenar las posiciones de las bombas
         self.contadorTiempo = Label(self.frame)  # Crea una etiqueta para mostrar el tiempo transcurrido
         self.contadorTiempo.grid(column=1, row=0, columnspan=4)  # Coloca la etiqueta en el marco
-        self.contadorBanderas = Label(self.frame, text="Banderas disponibles: " + str(self.banderasDisponibles), font=("Arial 15"))  # Crea una etiqueta para mostrar la cantidad de banderas disponibles
-        self.contadorBanderas.grid(column=5, row=0, columnspan=4)  # Coloca la etiqueta en el marco
+        self.flags_counter = Label(self.frame, text="Banderas disponibles: " + str(self.flags), font=("Arial 15"))  # Crea una etiqueta para mostrar la cantidad de banderas disponibles
+        self.flags_counter.grid(column=5, row=0, columnspan=4)  # Coloca la etiqueta en el marco
         self.generarBotones()  # Genera los botones del tablero
         self.bombasRandom()  # Genera las posiciones aleatorias de las bombas
         self.tiempoHabilitado = False  # Inicializa una bandera para habilitar el tiempo de juego
         self.bomba_img = PhotoImage(file="img\\bomba3.png")
         self.bandera = PhotoImage(file="img\\bandera.png")
-
+        
     def options(self):
         self.ventana_opciones = Toplevel(self.root)  # Crea una nueva ventana
         self.ventana_opciones.title("Opciones")  # Establece el título de la ventana
@@ -53,7 +54,7 @@ class Minesweeper:
 
         # Crea una variable de control para almacenar la opción seleccionada
         opcion_seleccionada = StringVar(self.ventana_opciones)
-        opcion_seleccionada.set(self.current_difficulty)  # Establece la opción por defecto
+        opcion_seleccionada.set("Easy" if self.current_difficulty == 40 else "Normal" if self.current_difficulty == 64 else "Hard" if self.current_difficulty == 81 else "Undefined")
 
         # Define una función para manejar la selección de una opción
         def seleccionar_opcion(opcion):
@@ -102,9 +103,15 @@ class Minesweeper:
         total_casillas = self.current_difficulty
         filas, columnas = self.find_dimensions(total_casillas)
         self.bombas = random.sample(range(total_casillas), total_casillas // 4)
+        self.setFlags(len(self.bombas)) 
         for bomba in self.bombas:
             fila, columna = divmod(bomba, columnas)
             self.listaBotones[fila][columna].config(command=lambda i=bomba: self.revealBombas(self.bombas))
+
+    def setFlags(self, flags):
+        self.flags = flags
+        self.flags_counter.config(text="Banderas disponibles: " + str(flags))
+        self.updateFlagsCounter()
 
     def revealBombas(self, index):
         filas, columnas = self.find_dimensions(self.current_difficulty)
@@ -164,19 +171,21 @@ class Minesweeper:
     def colocarBandera(self, index):
         fila, columna = index
         if self.listaBotones[fila][columna]['bg'] == 'grey':
-            if self.banderasDisponibles > 0:
+            if self.flags > 0:
                 self.listaBotones[fila][columna].config(bg='orange', image=self.bandera, width=64, height=65)
-                self.banderasDisponibles -= 1
-                self.actualizarContadorBanderas()
+                self.flags -= 1
+                self.updateFlagsCounter()
         elif self.listaBotones[fila][columna]['bg'] == 'orange':
-            self.listaBotones[fila][columna].config(bg='grey', image='')
-            self.banderasDisponibles += 1
-            self.actualizarContadorBanderas()
+            self.listaBotones[fila][columna].config(bg='grey', image=self.transparent_image, width=64, height=65)
+            self.flags += 1
+            self.updateFlagsCounter()
 
-    def actualizarContadorBanderas(self):
-        self.contadorBanderas.config(text="Banderas disponibles: " + str(self.banderasDisponibles))
+    def updateFlagsCounter(self):
+        self.flags_counter.config(text="Banderas disponibles: " + str(self.flags))
 
     def resetGame(self):
+        self.tiempoHabilitado = False
+        self.contadorTiempo.config(text="Tiempo transcurrido: " + str(0), font=("Arial 15"))
         for fila in self.listaBotones:
             for boton in fila:
                 boton.unbind('<Button-1>')
@@ -188,8 +197,7 @@ class Minesweeper:
         self.generarBotones()
         self.bombasRandom()
         self.inicio = False
-        self.banderasDisponibles = 10
-        self.actualizarContadorBanderas()
+        self.updateFlagsCounter()
 
 if __name__ == "__main__":
     root = Tk()  # Crea una ventana principal
