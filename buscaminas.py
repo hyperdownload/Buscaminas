@@ -249,7 +249,6 @@ def debugConsole():
             print(f"Error al ejecutar el comando: {e} {l}")
 
 if __name__ == "__main__":
-    # Inicia el hilo secundario
     hilo_consola = threading.Thread(target=debugConsole, daemon=True)
     hilo_consola.start()
     root = Tk() 

@@ -2,14 +2,20 @@ import csv
 
 class Data:
     def getStats(file_path):
+        """
+        Obtiene las estadísticas completas almacenadas en el archivo CSV.
+        
+        :param file_path: Ruta del archivo CSV.
+        :return: Lista de tuplas de estadísticas, donde cada tupla contiene (usuario, tiempo, dificultad).
+        """
         stats = []
         try:
             with open(file_path, mode='r', newline='') as file:
                 reader = csv.reader(file)
                 next(reader)  # Saltar el encabezado
                 for row in reader:
-                    if len(row) >= 2:  # Verificar si la fila tiene al menos dos elementos
-                       stats.append((row[0], int(row[1]), row[2]))
+                    if len(row) >= 3:  # Verificar si la fila tiene al menos tres elementos
+                        stats.append((row[0], int(row[1]), row[2]))
                     else:
                         print(f"La fila {reader.line_num} no tiene suficientes elementos.")
         except FileNotFoundError:
@@ -17,6 +23,13 @@ class Data:
         return stats
 
     def getStatPerUser(file_path, username):
+        """
+        Obtiene las estadísticas de un usuario específico.
+
+        :param file_path: Ruta del archivo CSV.
+        :param username: Nombre de usuario para buscar.
+        :return: Tupla de estadísticas del usuario (usuario, tiempo).
+        """
         try:
             with open(file_path, mode='r', newline='') as file:
                 reader = csv.reader(file)
@@ -29,10 +42,18 @@ class Data:
         return None
 
     def addStats(file_path, username, score, difficulty):
+        """
+        Agrega nuevas estadísticas al archivo CSV.
+
+        :param file_path: Ruta del archivo CSV.
+        :param username: Nombre de usuario.
+        :param score: Tiempo obtenido.
+        :param difficulty: Dificultad del juego.
+        """
         try:
             with open(file_path, mode='a', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow([username,score,difficulty])
+                writer.writerow([username, score, difficulty])
         except FileNotFoundError:
             print(f"El archivo {file_path} no fue encontrado.")
         Data.orderStats(file_path, "asc")
@@ -40,14 +61,17 @@ class Data:
 
     def orderStats(file_path, order):
         """
-        Ordena las estadísticas de usuario y puntaje en el archivo CSV.
-        :param file_path: Ruta del archivo CSV
-        :param order: 'asc' para ordenar de menor a mayor, 'desc' para ordenar de mayor a menor
+        Ordena las estadísticas de usuario y tiempo en el archivo CSV.
+
+        :param file_path: Ruta del archivo CSV.
+        :param order: 'asc' para ordenar de menor a mayor, 'desc' para ordenar de mayor a menor.
         """
         stats = Data.getStats(file_path)
         if order == 'desc':
+            # Ordena las estadísticas en orden descendente según el puntaje
             stats.sort(key=lambda x: x[1], reverse=True)
         elif order == 'asc':
+            # Ordena las estadísticas en orden ascendente según el puntaje
             stats.sort(key=lambda x: x[1])
         else:
             print("El parámetro 'order' debe ser 'asc' o 'desc'.")
@@ -55,7 +79,8 @@ class Data:
         try:
             with open(file_path, mode='w', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow(['username', 'score'])
+                writer.writerow(['username', 'score', 'difficulty'])
+                # Escribe las estadísticas ordenadas en el archivo CSV
                 for stat in stats:
                     writer.writerow(stat)
         except FileNotFoundError:
@@ -64,7 +89,8 @@ class Data:
     def removeRedundancy(file_path):
         """
         Elimina la redundancia de datos en el archivo CSV, conservando solo el puntaje más alto para cada jugador.
-        :param file_path: Ruta del archivo CSV
+        
+        :param file_path: Ruta del archivo CSV.
         """
         stats = Data.getStats(file_path)
         player_scores = {}
@@ -85,6 +111,7 @@ class Data:
             with open(file_path, mode='w', newline='') as file:
                 writer = csv.writer(file)
                 writer.writerow(['username', 'score', 'difficulty'])
+                # Escribe las estadísticas únicas en el archivo CSV
                 for stat in unique_stats:
                     writer.writerow(stat)
         except FileNotFoundError:
