@@ -79,12 +79,6 @@ class Minesweeper:
             self.current_difficulty = self.difficulty[opcion]
             self.resetGame()
 
-        label_dificultad = Label(self.ventana_opciones, text="Dificultad:", font=("Arial 12"))
-        label_dificultad.pack(side=LEFT)
-
-        option_menu = OptionMenu(self.ventana_opciones, opcion_seleccionada, *opciones, command=seleccionar_opcion)
-        option_menu.pack(side=LEFT)
-
         self.entry = Entry(self.ventana_opciones, width=30, textvariable=self.player)
         self.entry.pack(pady=20)
 
@@ -94,6 +88,12 @@ class Minesweeper:
 
         boton_aplicar = Button(self.ventana_opciones, text="Aplicar", command=aplicar_input)
         boton_aplicar.pack(pady=10)
+        
+        label_dificultad = Label(self.ventana_opciones, text="Dificultad:", font=("Arial 12"))
+        label_dificultad.pack(side=LEFT)
+
+        option_menu = OptionMenu(self.ventana_opciones, opcion_seleccionada, *opciones, command=seleccionar_opcion)
+        option_menu.pack(side=LEFT)
 
         boton_cerrar = Button(self.ventana_opciones, text="Cerrar", command=self.ventana_opciones.destroy)
         boton_cerrar.pack(side=BOTTOM)
