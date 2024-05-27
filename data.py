@@ -9,7 +9,7 @@ class Data:
                 next(reader)  # Saltar el encabezado
                 for row in reader:
                     if len(row) >= 2:  # Verificar si la fila tiene al menos dos elementos
-                        stats.append((row[0], int(row[1])))
+                       stats.append((row[0], int(row[1]), row[2]))
                     else:
                         print(f"La fila {reader.line_num} no tiene suficientes elementos.")
         except FileNotFoundError:
@@ -28,11 +28,11 @@ class Data:
             print(f"El archivo {file_path} no fue encontrado.")
         return None
 
-    def addStats(file_path, username, score):
+    def addStats(file_path, username, score, difficulty):
         try:
             with open(file_path, mode='a', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow([username,score])
+                writer.writerow([username,score,difficulty])
         except FileNotFoundError:
             print(f"El archivo {file_path} no fue encontrado.")
         Data.orderStats(file_path, "asc")
@@ -68,18 +68,23 @@ class Data:
         """
         stats = Data.getStats(file_path)
         player_scores = {}
-        for player, score in stats:
+
+        # Encuentra el puntaje más alto para cada jugador
+        for player, score, dif in stats:
             if player in player_scores:
-                player_scores[player] = min(player_scores[player], score)
+                if score < player_scores[player][0]:
+                    player_scores[player] = (score, dif)  # Actualiza el puntaje y la dificultad
             else:
-                player_scores[player] = score
+                player_scores[player] = (score, dif)
 
-        unique_stats = [(player, score) for player, score in player_scores.items()]
+        # Genera la lista de estadísticas únicas con puntaje más alto y dificultad
+        unique_stats = [(player, score, dif) for player, (score, dif) in player_scores.items()]
 
+        # Escribe las estadísticas únicas en el archivo CSV
         try:
             with open(file_path, mode='w', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow(['username', 'score'])
+                writer.writerow(['username', 'score', 'difficulty'])
                 for stat in unique_stats:
                     writer.writerow(stat)
         except FileNotFoundError:

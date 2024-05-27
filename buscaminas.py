@@ -6,6 +6,7 @@ import time
 from data import Data
 
 import threading
+import traceback
 
 class Minesweeper:
     def __init__(self, root):
@@ -48,7 +49,10 @@ class Minesweeper:
         self.tiempoHabilitado = False  
         self.bomba_img = PhotoImage(file="img\\bomba3.png")
         self.bandera = PhotoImage(file="img\\bandera.png")
-        
+    
+    def difficultyToString(self, difficulty):
+        return "Easy" if difficulty == 40 else "Normal" if difficulty == 64 else "Hard" if difficulty == 81 else "Undefined"
+    
     def stats(self):
         self.statsWindow = Toplevel(self.root)
         self.statsWindow.title("Estadísticas")
@@ -56,9 +60,10 @@ class Minesweeper:
        
         stats = Data.getStats(self.file_path)
 
-        for i, (username, score) in enumerate(stats):
+        for i, (username, score, dif) in enumerate(stats):
             Label(self.statsWindow, text=f"Jugador:{username}").grid(row=i, column=0, padx=10, pady=5)
             Label(self.statsWindow, text=f"Tiempo:{score}s").grid(row=i, column=1, padx=10, pady=5)
+            Label(self.statsWindow, text=f"Dificultad:{dif}").grid(row=i, column=2, padx=10, pady=5)
     
     def options(self):
         self.ventana_opciones = Toplevel(self.root)  
@@ -140,7 +145,7 @@ class Minesweeper:
         if buttons_discovered == total_safe_buttons:
             messagebox.showinfo("Victory", "¡Has ganado el juego!")
             self.tiempoHabilitado = False
-            Data.addStats(self.file_path,self.player.get(), self.tiempo_actual)
+            Data.addStats(self.file_path,self.player.get(), self.tiempo_actual, self.difficultyToString(self.current_difficulty))
             self.resetGame()
 
     def setFlags(self, flags):
@@ -240,7 +245,8 @@ def debugConsole():
         try:
             exec(command)
         except Exception as e:
-            print(f"Error al ejecutar el comando: {e}")
+            l=traceback.format_exc()
+            print(f"Error al ejecutar el comando: {e} {l}")
 
 if __name__ == "__main__":
     # Inicia el hilo secundario
