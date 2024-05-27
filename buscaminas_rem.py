@@ -1,8 +1,9 @@
 from tkinter import *  # Importa todo del módulo tkinter para la interfaz gráfica
 from tkinter import messagebox  # Importa el módulo messagebox de tkinter para mostrar mensajes emergentes
+import tkinter as tk # sino no funca
 import random  # Importa el módulo random para la generación aleatoria de números
 import time  # Importa el módulo time para manejar el tiempo
-
+from data import Data
 class Minesweeper:
     def __init__(self, root):
         self.root = root  # Inicializa la ventana principal de la aplicación
@@ -16,10 +17,14 @@ class Minesweeper:
         self.navbar = Menu(self.root)
         self.root.config(menu=self.navbar)
         self.transparent_image = PhotoImage(width=1, height=1)
-
+        
+        self.player=tk.StringVar()
+        self.player.set("Player")
+        self.file_path = 'stats.csv'
         # Crea los elementos del menú
         self.file_menu = Menu(self.navbar, tearoff=0)
         self.file_menu.add_command(label="Nuevo Juego", command=self.resetGame)
+        self.file_menu.add_command(label="Stats", command=self.stats)
         self.file_menu.add_command(label="Opciones", command=self.options)
         self.file_menu.add_command(label="Salir", command=self.root.quit)
         self.navbar.add_cascade(label="Archivo", menu=self.file_menu)
@@ -44,6 +49,19 @@ class Minesweeper:
         self.bomba_img = PhotoImage(file="img\\bomba3.png")
         self.bandera = PhotoImage(file="img\\bandera.png")
         
+    def stats(self):
+        self.statsWindow = Toplevel(self.root)
+        self.statsWindow.title("Estadísticas")
+        self.statsWindow.geometry("300x200")
+        
+        # Obtiene las estadísticas usando el módulo Data
+        stats = Data.getStats(self.file_path)
+        
+        # Crear una etiqueta para cada fila de estadísticas
+        for i, (username, score) in enumerate(stats):
+            Label(self.statsWindow, text=f"Jugador:{username}").grid(row=i, column=0, padx=10, pady=5)
+            Label(self.statsWindow, text=f"Tiempo:{score}s").grid(row=i, column=1, padx=10, pady=5)
+    
     def options(self):
         self.ventana_opciones = Toplevel(self.root)  # Crea una nueva ventana
         self.ventana_opciones.title("Opciones")  # Establece el título de la ventana
@@ -69,14 +87,28 @@ class Minesweeper:
         option_menu = OptionMenu(self.ventana_opciones, opcion_seleccionada, *opciones, command=seleccionar_opcion)
         option_menu.pack(side=LEFT)
 
+        # Crea un campo de entrada
+        self.entry = Entry(self.ventana_opciones, width=30, textvariable=self.player)
+        self.entry.pack(pady=20)
+
+        # Define una función para manejar la acción del botón "Aplicar"
+        def aplicar_input():
+            input_text = self.entry.get()
+            # Aquí puedes hacer lo que necesites con el contenido del input
+            messagebox.showinfo("Options changed", "Los valores se ajustaron correctamente!")
+
+        # Crea el botón "Aplicar" y lo añade a la ventana de opciones
+        boton_aplicar = Button(self.ventana_opciones, text="Aplicar", command=aplicar_input)
+        boton_aplicar.pack(pady=10)
+
         # Crea el botón de cerrar y lo añade a la ventana de opciones
         boton_cerrar = Button(self.ventana_opciones, text="Cerrar", command=self.ventana_opciones.destroy)
         boton_cerrar.pack(side=BOTTOM)
 
     def tiempo(self):
         if self.tiempoHabilitado:
-            tiempo_actual = int(time.time() - self.tiempoInicio)
-            self.contadorTiempo.config(text="Tiempo transcurrido: " + str(tiempo_actual), font=("Arial 15"))
+            self.tiempo_actual = int(time.time() - self.tiempoInicio)
+            self.contadorTiempo.config(text="Tiempo transcurrido: " + str(self.tiempo_actual), font=("Arial 15"))
             self.root.after(1000, self.tiempo)  # Actualiza el tiempo cada segundo
 
     def generarBotones(self):
@@ -102,11 +134,30 @@ class Minesweeper:
     def bombasRandom(self):
         total_casillas = self.current_difficulty
         filas, columnas = self.find_dimensions(total_casillas)
-        self.bombas = random.sample(range(total_casillas), total_casillas // 4)
+        self.bombas = random.sample(range(total_casillas), total_casillas // 14)
+        #print(self.bombas)
         self.setFlags(len(self.bombas)) 
         for bomba in self.bombas:
             fila, columna = divmod(bomba, columnas)
             self.listaBotones[fila][columna].config(command=lambda i=bomba: self.revealBombas(self.bombas))
+
+    def checkWin(self):
+        # Variables para contar el número de botones descubiertos y el total de botones sin minas
+        buttons_discovered = 0
+        total_safe_buttons = self.current_difficulty - len(self.bombas)
+        
+        for i in range(len(self.listaBotones)):
+            for j in range(len(self.listaBotones[i])):
+                button = self.listaBotones[i][j]
+                # Comprobar si el botón no tiene bomba y está descubierto
+                if (i * len(self.listaBotones[i]) + j) not in self.bombas and button['bg'] != 'grey':
+                    buttons_discovered += 1
+        
+        # Si el número de botones descubiertos es igual al número total de botones sin minas, el jugador gana
+        if buttons_discovered == total_safe_buttons:
+            messagebox.showinfo("Victory", "¡Has ganado el juego!")
+            self.tiempoHabilitado = False
+            Data.addStats(self.file_path,self.player.get(), self.tiempo_actual)
 
     def setFlags(self, flags):
         self.flags = flags
@@ -167,6 +218,7 @@ class Minesweeper:
                 self.tiempoHabilitado = True
                 self.tiempo()
                 self.inicio = True
+            self.checkWin()
 
     def colocarBandera(self, index):
         fila, columna = index
@@ -197,6 +249,7 @@ class Minesweeper:
         self.generarBotones()
         self.bombasRandom()
         self.inicio = False
+        self.win = False  # Resetea el estado de la victoria
         self.updateFlagsCounter()
 
 if __name__ == "__main__":
