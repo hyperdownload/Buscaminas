@@ -4,10 +4,35 @@ import tkinter as tk
 import random
 import time  
 from data import Data
-
 import threading
 import traceback
+import os
+import importlib.util
 
+class ModManager:
+    def __init__(self, mod_directory="mods"):
+        self.mod_directory = mod_directory
+        self.mods = []
+        self.load_mods()
+
+    def load_mods(self):
+        if not os.path.exists(self.mod_directory):
+            os.makedirs(self.mod_directory)
+        for filename in os.listdir(self.mod_directory):
+            if filename.endswith(".py"):
+                self.load_mod(filename)
+
+    def load_mod(self, filename):
+        mod_path = os.path.join(self.mod_directory, filename)
+        spec = importlib.util.spec_from_file_location(filename[:-3], mod_path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        self.mods.append(mod)
+
+    def apply_mods(self, game):
+        for mod in self.mods:
+            if hasattr(mod, 'apply_mod'):
+                mod.apply_mod(game)
 class Minesweeper:
     def __init__(self, root):
         self.root = root 
@@ -31,8 +56,8 @@ class Minesweeper:
         self.file_menu.add_command(label="Salir", command=self.root.quit)
         self.navbar.add_cascade(label="Archivo", menu=self.file_menu)
 
-        self.difficulty = {"easy": 40, "normal": 64, "hard": 81}
-        self.current_difficulty = self.difficulty["easy"]
+        self.difficulty = {"Easy": 40, "Normal": 64, "Hard": 81, "ELDETONACULOS":150}
+        self.current_difficulty = self.difficulty["Easy"]
 
         self.listaBotones = []  
         self.reset = False 
@@ -49,9 +74,13 @@ class Minesweeper:
         self.tiempoHabilitado = False  
         self.bomba_img = PhotoImage(file="img\\bomba3.png")
         self.bandera = PhotoImage(file="img\\bandera.png")
+        
+        # Mod Manager
+        self.mod_manager = ModManager()
+        self.mod_manager.apply_mods(self)
     
     def difficultyToString(self, difficulty):
-        return "Easy" if difficulty == 40 else "Normal" if difficulty == 64 else "Hard" if difficulty == 81 else "Undefined"
+        return "Easy" if difficulty == self.difficulty["Easy"] else self.difficulty["Normal"] if difficulty == self.difficulty["Hard"] else "Hard" if difficulty == self.difficulty["Hard"] else difficulty == self.difficulty["ELDETONACULOS"]
     
     def stats(self):
         self.statsWindow = Toplevel(self.root)
@@ -70,10 +99,10 @@ class Minesweeper:
         self.ventana_opciones.title("Opciones")  
         self.ventana_opciones.geometry("300x200")  
 
-        opciones = ["easy", "normal", "hard"]
+        opciones = ["Easy", "Normal", "Hard", "ELDETONACULOS"]
 
         opcion_seleccionada = StringVar(self.ventana_opciones)
-        opcion_seleccionada.set("Easy" if self.current_difficulty == 40 else "Normal" if self.current_difficulty == 64 else "Hard" if self.current_difficulty == 81 else "Undefined")
+        opcion_seleccionada.set(self.difficultyToString(self.current_difficulty))
 
         def seleccionar_opcion(opcion):
             self.current_difficulty = self.difficulty[opcion]
@@ -111,7 +140,7 @@ class Minesweeper:
         for i in range(filas):
             fila_botones = [] 
             for j in range(columnas):
-                btn = Button(self.frame, width=6, height=3, text="", font=("Arial 12 bold"), bg="grey")
+                btn = Button(self.frame, width=6, height=3, text="", font=("Arial 8 bold"), bg="grey")
                 btn.bind('<Button-1>', lambda event, c=(i, j): self.slotPulsado(c))
                 btn.bind('<Button-3>', lambda event, c=(i, j): self.colocarBandera(c))
                 btn.grid(column=j + 1, row=i + 1, sticky='nsew')  
@@ -143,9 +172,9 @@ class Minesweeper:
                     buttons_discovered += 1
 
         if buttons_discovered == total_safe_buttons:
-            messagebox.showinfo("Victory", "¡Has ganado el juego!")
             self.tiempoHabilitado = False
             Data.addStats(self.file_path,self.player.get(), self.tiempo_actual, self.difficultyToString(self.current_difficulty))
+            messagebox.showinfo("Victory", "¡Has ganado el juego!")
             self.resetGame()
 
     def setFlags(self, flags):
@@ -157,7 +186,7 @@ class Minesweeper:
         filas, columnas = self.find_dimensions(self.current_difficulty)
         for i in index:
             fila, columna = divmod(i, columnas)
-            self.listaBotones[fila][columna].config(bg='red', image=self.bomba_img, width=64, height=65)
+            self.listaBotones[fila][columna].config(bg='red', image=self.bomba_img, width=32, height=33)
         self.tiempoHabilitado = False
         messagebox.showinfo("Game Over", "Has pulsado una bomba!")
         self.resetGame()
@@ -213,11 +242,11 @@ class Minesweeper:
         fila, columna = index
         if self.listaBotones[fila][columna]['bg'] == 'grey':
             if self.flags > 0:
-                self.listaBotones[fila][columna].config(bg='orange', image=self.bandera, width=64, height=65)
+                self.listaBotones[fila][columna].config(bg='orange', image=self.bandera, width=32, height=33)
                 self.flags -= 1
                 self.updateFlagsCounter()
         elif self.listaBotones[fila][columna]['bg'] == 'orange':
-            self.listaBotones[fila][columna].config(bg='grey', image=self.transparent_image, width=64, height=65)
+            self.listaBotones[fila][columna].config(bg='grey', image=self.transparent_image, width=32, height=33)
             self.flags += 1
             self.updateFlagsCounter()
 
