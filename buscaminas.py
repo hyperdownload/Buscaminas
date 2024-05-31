@@ -8,6 +8,7 @@ import threading
 import traceback
 import os
 import importlib.util
+from PIL import Image, ImageTk
 
 class ModManager:
     def __init__(self, mod_directory="mods"):
@@ -71,8 +72,17 @@ class Minesweeper:
         self.flags_counter.grid(column=5, row=0, columnspan=4)  
         
         self.tiempoHabilitado = False  
-        self.bomba_img = PhotoImage(file="img\\bomba3.png")
-        self.bandera = PhotoImage(file="img\\bandera.png")
+        # Imagenes originales
+        img_bomb_original = Image.open("img\\bomba3.png")
+        img_flag_original = Image.open("img\\bandera.png")
+
+        # Redimensionamiento de imagenes
+        img_bomb_rescaled = img_bomb_original.resize((50, 50), Image.ANTIALIAS) 
+        img_flag_rescaled = img_flag_original.resize((50, 50), Image.ANTIALIAS)  
+
+        # Conversion a un formato que acepte tk
+        self.bomb = ImageTk.PhotoImage(img_bomb_rescaled)
+        self.flag = ImageTk.PhotoImage(img_flag_rescaled)
         
         # Mod Manager
         self.mod_manager = ModManager()
@@ -149,11 +159,6 @@ class Minesweeper:
                 fila_botones.append(btn) 
             self.listaBotones.append(fila_botones)  
 
-        for i in range(columnas):
-            self.frame.grid_columnconfigure(i, weight=1)
-        for i in range(filas):
-            self.frame.grid_rowconfigure(i, weight=1)
-
     def bombasRandom(self):
         total_casillas = self.current_difficulty
         filas, columnas = self.find_dimensions(total_casillas)
@@ -188,7 +193,7 @@ class Minesweeper:
         filas, columnas = self.find_dimensions(self.current_difficulty)
         for i in index:
             fila, columna = divmod(i, columnas)
-            self.listaBotones[fila][columna].config(bg='red', image=self.bomba_img, width=32, height=33)
+            self.listaBotones[fila][columna].config(bg='red', image=self.bomb)
         self.tiempoHabilitado = False
         messagebox.showinfo("Game Over", "Has pulsado una bomba!")
         self.resetGame()
@@ -254,19 +259,22 @@ class Minesweeper:
         new_bomb = random.choice(list(available_spots))
         self.bombas.append(new_bomb)
         
-        # Actualizar el botón
+        # Actualizar el comando del nuevo botón de bomba
         new_fila, new_columna = divmod(new_bomb, columnas)
         self.listaBotones[new_fila][new_columna].config(command=lambda i=new_bomb: self.revealBombas(self.bombas))
+        
+        # Eliminar el comando del botón donde se quitó la bomba
+        self.listaBotones[fila][columna].config(command=lambda: None)
 
     def colocarBandera(self, index):
         fila, columna = index
         if self.listaBotones[fila][columna]['bg'] == 'grey':
             if self.flags > 0:
-                self.listaBotones[fila][columna].config(bg='orange', image=self.bandera, width=32, height=33)
+                self.listaBotones[fila][columna].config(bg='orange', image=self.flag)
                 self.flags -= 1
                 self.updateFlagsCounter()
         elif self.listaBotones[fila][columna]['bg'] == 'orange':
-            self.listaBotones[fila][columna].config(bg='grey', image=self.transparent_image, width=32, height=33)
+            self.listaBotones[fila][columna].config(bg='grey', image=self.transparent_image)
             self.flags += 1
             self.updateFlagsCounter()
 
@@ -288,13 +296,14 @@ class Minesweeper:
         self.bombasRandom()
         self.inicio = False
         self.updateFlagsCounter()
+
 def debugConsole():
     while True:
-        command= input("Introduce un comando: ")
+        command = input("Introduce un comando: ")
         try:
             exec(command)
         except Exception as e:
-            l=traceback.format_exc()
+            l = traceback.format_exc()
             print(f"Error al ejecutar el comando: {e} {l}")
 
 if __name__ == "__main__":
