@@ -69,8 +69,7 @@ class Minesweeper:
         self.contadorTiempo.grid(column=1, row=0, columnspan=4) 
         self.flags_counter = Label(self.frame, text="Banderas disponibles: " + str(self.flags), font=("Arial 15")) 
         self.flags_counter.grid(column=5, row=0, columnspan=4)  
-        self.generarBotones() 
-        self.bombasRandom()  
+        
         self.tiempoHabilitado = False  
         self.bomba_img = PhotoImage(file="img\\bomba3.png")
         self.bandera = PhotoImage(file="img\\bandera.png")
@@ -78,6 +77,9 @@ class Minesweeper:
         # Mod Manager
         self.mod_manager = ModManager()
         self.mod_manager.apply_mods(self)
+        
+        self.generarBotones() 
+        self.bombasRandom()  
     
     def difficultyToString(self, difficulty):
         return "Easy" if difficulty == self.difficulty["Easy"] else self.difficulty["Normal"] if difficulty == self.difficulty["Hard"] else "Hard" if difficulty == self.difficulty["Hard"] else difficulty == self.difficulty["ELDETONACULOS"]
@@ -217,6 +219,17 @@ class Minesweeper:
     def slotPulsado(self, index):
         filas, columnas = self.find_dimensions(self.current_difficulty)
         fila, columna = index
+        
+        if not self.inicio:
+            if fila * columnas + columna in self.bombas and self.current_difficulty in [self.difficulty["Easy"], self.difficulty["Normal"]]:
+                # Reasignar bomba
+                self.reassignBomb(fila, columna)
+            
+            self.tiempoInicio = time.time()
+            self.tiempoHabilitado = True
+            self.tiempo()
+            self.inicio = True
+        
         if self.listaBotones[fila][columna]['text'] == '' and self.listaBotones[fila][columna]['bg'] == 'grey':
             bombas_cercanas = self.contarBombasCercanas(index)
             self.listaBotones[fila][columna].config(bg='SystemButtonFace', text=str(bombas_cercanas) if bombas_cercanas > 0 else '')
@@ -230,13 +243,20 @@ class Minesweeper:
                             adj_index = (ny, nx)
                             if adj_index not in self.bombas and self.listaBotones[ny][nx]['text'] == '' and self.listaBotones[ny][nx]['bg'] == 'grey':
                                 self.slotPulsado(adj_index)
-            self.tiempoHabilitado = True
-            if not self.inicio:
-                self.tiempoInicio = time.time()
-                self.tiempoHabilitado = True
-                self.tiempo()
-                self.inicio = True
             self.checkWin()
+
+    def reassignBomb(self, fila, columna):
+        filas, columnas = self.find_dimensions(self.current_difficulty)
+        bomb_index = fila * columnas + columna
+        self.bombas.remove(bomb_index)
+
+        available_spots = set(range(self.current_difficulty)) - set(self.bombas) - {bomb_index}
+        new_bomb = random.choice(list(available_spots))
+        self.bombas.append(new_bomb)
+        
+        # Actualizar el botón
+        new_fila, new_columna = divmod(new_bomb, columnas)
+        self.listaBotones[new_fila][new_columna].config(command=lambda i=new_bomb: self.revealBombas(self.bombas))
 
     def colocarBandera(self, index):
         fila, columna = index
