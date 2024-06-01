@@ -11,31 +11,31 @@ import importlib.util
 from PIL import Image, ImageTk
 
 class ModManager:
-    def __init__(self, mod_directory="mods"):
+    def __init__(self, mod_directory="mods")->None:
         self.mod_directory = mod_directory
         self.mods = []
         self.load_mods()
 
-    def load_mods(self):
+    def load_mods(self)->None:
         if not os.path.exists(self.mod_directory):
             os.makedirs(self.mod_directory)
         for filename in os.listdir(self.mod_directory):
             if filename.endswith(".py"):
                 self.load_mod(filename)
 
-    def load_mod(self, filename):
+    def load_mod(self, filename)->None:
         mod_path = os.path.join(self.mod_directory, filename)
         spec = importlib.util.spec_from_file_location(filename[:-3], mod_path)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         self.mods.append(mod)
 
-    def apply_mods(self, game):
+    def apply_mods(self, game)->None:
         for mod in self.mods:
             if hasattr(mod, 'apply_mod'):
                 mod.apply_mod(game)
 class Minesweeper:
-    def __init__(self, root):
+    def __init__(self, root)->None:
         self.root = root 
         self.frame = Frame(self.root)  
         self.frame.pack()  
@@ -91,10 +91,17 @@ class Minesweeper:
         self.generarBotones() 
         self.bombasRandom()  
     
-    def difficultyToString(self, difficulty):
-        return "Easy" if difficulty == self.difficulty["Easy"] else self.difficulty["Normal"] if difficulty == self.difficulty["Hard"] else "Hard" if difficulty == self.difficulty["Hard"] else difficulty == self.difficulty["ELDETONACULOS"]
-    
-    def stats(self):
+    def difficultyToString(self, difficulty)->str:
+        if difficulty == self.difficulty["Easy"]:
+            return "Easy"
+        elif difficulty == self.difficulty["Normal"]:
+            return "Normal"
+        elif difficulty == self.difficulty["Hard"]:
+            return "Hard"
+        elif difficulty == self.difficulty["ELDETONACULOS"]:
+            return "ELDETONACULOS"
+        
+    def stats(self)->None:
         self.statsWindow = Toplevel(self.root)
         self.statsWindow.title("Estadísticas")
         self.statsWindow.geometry("300x200")
@@ -106,7 +113,7 @@ class Minesweeper:
             Label(self.statsWindow, text=f"Tiempo:{score}s").grid(row=i, column=1, padx=10, pady=5)
             Label(self.statsWindow, text=f"Dificultad:{dif}").grid(row=i, column=2, padx=10, pady=5)
     
-    def options(self):
+    def options(self)->None:
         self.ventana_opciones = Toplevel(self.root)  
         self.ventana_opciones.title("Opciones")  
         self.ventana_opciones.geometry("300x200")  
@@ -139,13 +146,13 @@ class Minesweeper:
         boton_cerrar = Button(self.ventana_opciones, text="Cerrar", command=self.ventana_opciones.destroy)
         boton_cerrar.pack(side=BOTTOM)
 
-    def tiempo(self):
+    def tiempo(self)->None:
         if self.tiempoHabilitado:
             self.tiempo_actual = int(time.time() - self.tiempoInicio)
             self.contadorTiempo.config(text="Tiempo transcurrido: " + str(self.tiempo_actual), font=("Arial 15"))
             self.root.after(1000, self.tiempo) 
 
-    def generarBotones(self):
+    def generarBotones(self)->None:
         filas, columnas = self.find_dimensions(self.current_difficulty)
         self.listaBotones = []  
 
@@ -159,7 +166,7 @@ class Minesweeper:
                 fila_botones.append(btn) 
             self.listaBotones.append(fila_botones)  
 
-    def bombasRandom(self):
+    def bombasRandom(self)->None:
         total_casillas = self.current_difficulty
         filas, columnas = self.find_dimensions(total_casillas)
         self.bombas = random.sample(range(total_casillas), total_casillas // 4)
@@ -167,8 +174,8 @@ class Minesweeper:
         for bomba in self.bombas:
             fila, columna = divmod(bomba, columnas)
             self.listaBotones[fila][columna].config(command=lambda i=bomba: self.revealBombas(self.bombas))
-
-    def checkWin(self):
+    
+    def checkWin(self)->None:
         buttons_discovered = 0
         total_safe_buttons = self.current_difficulty - len(self.bombas)
         
@@ -184,30 +191,65 @@ class Minesweeper:
             messagebox.showinfo("Victory", "¡Has ganado el juego!")
             self.resetGame()
 
-    def setFlags(self, flags):
+    def setFlags(self, flags)->None:
         self.flags = flags
         self.flags_counter.config(text="Banderas disponibles: " + str(flags))
         self.updateFlagsCounter()
 
-    def revealBombas(self, index):
+    def revealBombas(self, index)->None:
+        explosionPower=0
         filas, columnas = self.find_dimensions(self.current_difficulty)
         for i in index:
             fila, columna = divmod(i, columnas)
-            self.listaBotones[fila][columna].config(bg='red', image=self.bomb)
+            if self.listaBotones[fila][columna]['bg'] != 'orange':
+                self.listaBotones[fila][columna].config(bg='red', image=self.bomb)
+                explosionPower+=1
+        self.shakeWindow(explosionPower)
         self.tiempoHabilitado = False
         messagebox.showinfo("Game Over", "Has pulsado una bomba!")
         self.resetGame()
 
-    def find_factors(self, n):
+    def shakeWindow(self, intensity, duration=2000)->None:
+        """
+        Sacude la ventana de Tkinter con una intensidad específica durante un periodo de tiempo.
+
+        Parámetros:
+        intensity (int): La intensidad del sacudido.
+        duration (int): Duración del sacudido en milisegundos (por defecto es 2000ms, equivalente a 2s).
+        """
+        def shake():
+            if self.shake_count < max_shakes:
+                # Mueve la ventana a una nueva posición aleatoria alrededor de su posición original
+                delta_x = random.randint(-intensity, intensity)
+                delta_y = random.randint(-intensity, intensity)
+                self.root.geometry(f'+{self.original_x + delta_x}+{self.original_y + delta_y}')
+                self.shake_count += 1
+                self.root.after(interval, shake)
+            else:
+                # Restaura la posición original
+                self.root.geometry(f'+{self.original_x}+{self.original_y}')
+        # Obtiene la posición actual de la ventana
+        self.original_x = self.root.winfo_x()
+        self.original_y = self.root.winfo_y()
+
+        # Calcula la cantidad de sacudidas y el intervalo entre ellas
+        interval = 50  # Intervalo en milisegundos
+        max_shakes = duration // interval
+        self.shake_count = 0
+
+        # Inicio
+        shake()
+    
+    def find_factors(self, n)->int:
         factors = [(i, n // i) for i in range(1, int(n**0.5) + 1) if n % i == 0]
         return factors
 
-    def find_dimensions(self, n):
+    def find_dimensions(self, n)->int:
         factors = self.find_factors(n)
         closest_to_square = min(factors, key=lambda x: abs(x[0] - x[1]))
         return closest_to_square
 
-    def contarBombasCercanas(self, index):
+    def contarBombasCercanas(self, index)->int:
         count = 0 
         filas, columnas = self.find_dimensions(self.current_difficulty)
         fila, columna = index
@@ -221,7 +263,31 @@ class Minesweeper:
                         count += 1  
         return count  
 
-    def slotPulsado(self, index):
+    def coloration(self, num)->str:
+        """
+        Retorna un color RGB en formato adecuado para Tkinter según el nivel de gravedad dado.
+
+        Parámetros:
+        num (int): El nivel de gravedad, de 1 (mínimo) a 9 (máximo).
+
+        Retorno:
+        str: Color RGB en formato hexadecimal adecuado para Tkinter.
+        """
+        # Asegurarse de que num esté dentro del rango 1-9
+        if num < 1:
+            num = 1
+        elif num > 9:
+            num = 9
+
+        # Calcular el color
+        # De verde (#00FF00) a rojo (#FF0000)
+        red = int((num - 1) * (255 / 8))
+        green = int(255 - ((num - 1) * (255 / 8)))
+        blue = 0
+
+        return f'#{red:02x}{green:02x}{blue:02x}'
+    
+    def slotPulsado(self, index)->None:
         filas, columnas = self.find_dimensions(self.current_difficulty)
         fila, columna = index
         
@@ -237,7 +303,7 @@ class Minesweeper:
         
         if self.listaBotones[fila][columna]['text'] == '' and self.listaBotones[fila][columna]['bg'] == 'grey':
             bombas_cercanas = self.contarBombasCercanas(index)
-            self.listaBotones[fila][columna].config(bg='SystemButtonFace', text=str(bombas_cercanas) if bombas_cercanas > 0 else '')
+            self.listaBotones[fila][columna].config(bg='SystemButtonFace', text=str(bombas_cercanas) if bombas_cercanas > 0 else '', fg=self.coloration(bombas_cercanas))
             if bombas_cercanas == 0:
                 for dy in (-1, 0, 1):
                     for dx in (-1, 0, 1):
@@ -250,7 +316,7 @@ class Minesweeper:
                                 self.slotPulsado(adj_index)
             self.checkWin()
 
-    def reassignBomb(self, fila, columna):
+    def reassignBomb(self, fila, columna)->None:
         filas, columnas = self.find_dimensions(self.current_difficulty)
         bomb_index = fila * columnas + columna
         self.bombas.remove(bomb_index)
@@ -266,7 +332,7 @@ class Minesweeper:
         # Eliminar el comando del botón donde se quitó la bomba
         self.listaBotones[fila][columna].config(command=lambda: None)
 
-    def colocarBandera(self, index):
+    def colocarBandera(self, index)->None:
         fila, columna = index
         if self.listaBotones[fila][columna]['bg'] == 'grey':
             if self.flags > 0:
@@ -278,10 +344,10 @@ class Minesweeper:
             self.flags += 1
             self.updateFlagsCounter()
 
-    def updateFlagsCounter(self):
+    def updateFlagsCounter(self)->None:
         self.flags_counter.config(text="Banderas disponibles: " + str(self.flags))
 
-    def resetGame(self):
+    def resetGame(self)->None:
         self.tiempoHabilitado = False
         self.contadorTiempo.config(text="Tiempo transcurrido: " + str(0), font=("Arial 15"))
         for fila in self.listaBotones:
@@ -297,7 +363,7 @@ class Minesweeper:
         self.inicio = False
         self.updateFlagsCounter()
 
-def debugConsole():
+def debugConsole()->None:
     while True:
         command = input("Introduce un comando: ")
         try:
