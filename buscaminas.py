@@ -1,6 +1,7 @@
 from tkinter import *  
 from tkinter import messagebox 
 import tkinter as tk 
+from tkinter import ttk
 import random
 import time  
 from data import Data
@@ -12,9 +13,12 @@ from PIL import Image, ImageTk
 
 class ModManager:
     def __init__(self, mod_directory="mods")->None:
-        self.mod_directory = mod_directory
-        self.mods = []
-        self.load_mods()
+        try:
+            self.mod_directory = mod_directory
+            self.mods = []
+            self.load_mods()
+        except:
+            messagebox.showerror("Error", "Hubo un error cargando los mods debido a un error o incompatibilidad en el mod, se iniciara en vanilla.")
 
     def load_mods(self)->None:
         if not os.path.exists(self.mod_directory):
@@ -22,7 +26,7 @@ class ModManager:
         for filename in os.listdir(self.mod_directory):
             if filename.endswith(".py"):
                 self.load_mod(filename)
-
+                    
     def load_mod(self, filename)->None:
         mod_path = os.path.join(self.mod_directory, filename)
         spec = importlib.util.spec_from_file_location(filename[:-3], mod_path)
@@ -34,6 +38,7 @@ class ModManager:
         for mod in self.mods:
             if hasattr(mod, 'apply_mod'):
                 mod.apply_mod(game)
+
 class Minesweeper:
     def __init__(self, root)->None:
         self.root = root 
@@ -46,6 +51,10 @@ class Minesweeper:
         self.navbar = Menu(self.root)
         self.root.config(menu=self.navbar)
         self.transparent_image = PhotoImage(width=1, height=1)
+        
+        # Mod Manager
+        self.mod_manager = ModManager()
+        self.mod_manager.apply_mods(self)
         
         self.player=tk.StringVar()
         self.player.set("Player")
@@ -60,36 +69,39 @@ class Minesweeper:
         self.difficulty = {"Easy": 40, "Normal": 64, "Hard": 81, "ELDETONACULOS":150}
         self.current_difficulty = self.difficulty["Easy"]
 
-        self.listaBotones = []  
+        self.buttonsList = []  
         self.reset = False 
         self.inicio = False 
-        self.tiempoInicio = time.time()  
+        self.timeInicio = time.time()  
         self.flags = 0  
-        self.bombas = [] 
-        self.contadorTiempo = Label(self.frame)  
-        self.contadorTiempo.grid(column=1, row=0, columnspan=4) 
+        self.bombs = [] 
+        self.contadortime = Label(self.frame)  
+        self.contadortime.grid(column=1, row=0, columnspan=4) 
         self.flags_counter = Label(self.frame, text="Banderas disponibles: " + str(self.flags), font=("Arial 15")) 
         self.flags_counter.grid(column=5, row=0, columnspan=4)  
         
-        self.tiempoHabilitado = False  
+        self.timeHabilited = False  
         # Imagenes originales
         img_bomb_original = Image.open("img\\bomba3.png")
         img_flag_original = Image.open("img\\bandera.png")
 
         # Redimensionamiento de imagenes
-        img_bomb_rescaled = img_bomb_original.resize((50, 50), Image.ANTIALIAS) 
-        img_flag_rescaled = img_flag_original.resize((50, 50), Image.ANTIALIAS)  
+        img_bomb_rescaled = img_bomb_original.resize((50, 50), Image.Resampling.LANCZOS) 
+        img_flag_rescaled = img_flag_original.resize((50, 50), Image.Resampling.LANCZOS)  
 
         # Conversion a un formato que acepte tk
         self.bomb = ImageTk.PhotoImage(img_bomb_rescaled)
         self.flag = ImageTk.PhotoImage(img_flag_rescaled)
         
-        # Mod Manager
-        self.mod_manager = ModManager()
-        self.mod_manager.apply_mods(self)
+        #Opciones
+        self.isShakeWindowEnabled = tk.BooleanVar()
+        self.isShakeWindowEnabled.set(True)
+        self.defaultNoInstaLoseAttemps = 3
         
-        self.generarBotones() 
-        self.bombasRandom()  
+        self.currentAttemps = self.defaultNoInstaLoseAttemps
+        
+        self.generateButtons() 
+        self.bombsRandom()  
     
     def difficultyToString(self, difficulty)->str:
         if difficulty == self.difficulty["Easy"]:
@@ -110,84 +122,87 @@ class Minesweeper:
 
         for i, (username, score, dif) in enumerate(stats):
             Label(self.statsWindow, text=f"Jugador:{username}").grid(row=i, column=0, padx=10, pady=5)
-            Label(self.statsWindow, text=f"Tiempo:{score}s").grid(row=i, column=1, padx=10, pady=5)
+            Label(self.statsWindow, text=f"time:{score}s").grid(row=i, column=1, padx=10, pady=5)
             Label(self.statsWindow, text=f"Dificultad:{dif}").grid(row=i, column=2, padx=10, pady=5)
     
-    def options(self)->None:
-        self.ventana_opciones = Toplevel(self.root)  
-        self.ventana_opciones.title("Opciones")  
-        self.ventana_opciones.geometry("300x200")  
+    def options(self) -> None:
+        self.optionsWindow = Toplevel(self.root)
+        self.optionsWindow.title("Opciones")
+        self.optionsWindow.geometry("300x250")
 
-        opciones = ["Easy", "Normal", "Hard", "ELDETONACULOS"]
+        options = ["Easy", "Normal", "Hard", "ELDETONACULOS"]
 
-        opcion_seleccionada = StringVar(self.ventana_opciones)
-        opcion_seleccionada.set(self.difficultyToString(self.current_difficulty))
+        selectedOption = StringVar(self.optionsWindow)
+        selectedOption.set(self.difficultyToString(self.current_difficulty))
 
-        def seleccionar_opcion(opcion):
+        def seleccionar_opcion(opcion)->None:
             self.current_difficulty = self.difficulty[opcion]
             self.resetGame()
 
-        self.entry = Entry(self.ventana_opciones, width=30, textvariable=self.player)
-        self.entry.pack(pady=20)
+        self.entry = Entry(self.optionsWindow, width=30, textvariable=self.player)
+        self.entry.grid(row=0, column=0, columnspan=2, padx=20, pady=20)
 
-        def aplicar_input():
+        def applyInput()->None:
             input_text = self.entry.get()
             messagebox.showinfo("Options changed", "Los valores se ajustaron correctamente!")
 
-        boton_aplicar = Button(self.ventana_opciones, text="Aplicar", command=aplicar_input)
-        boton_aplicar.pack(pady=10)
+        applyButton = Button(self.optionsWindow, text="Aplicar", command=applyInput)
+        applyButton.grid(row=1, column=0, columnspan=2, pady=10)
+
+        difficultyLabel = Label(self.optionsWindow, text="Dificultad:", font=("Arial", 12))
+        difficultyLabel.grid(row=2, column=0, padx=10, pady=10, sticky=E)
+
+        option_menu = OptionMenu(self.optionsWindow, selectedOption, *options, command=seleccionar_opcion)
+        option_menu.grid(row=2, column=1, padx=10, pady=10, sticky=W)
         
-        label_dificultad = Label(self.ventana_opciones, text="Dificultad:", font=("Arial 12"))
-        label_dificultad.pack(side=LEFT)
+        checkbox = ttk.Checkbutton(self.optionsWindow, text="Movimiento de ventana al perder", variable=self.isShakeWindowEnabled)
+        checkbox.grid(row=3, column=0, padx=10, pady=10)
 
-        option_menu = OptionMenu(self.ventana_opciones, opcion_seleccionada, *opciones, command=seleccionar_opcion)
-        option_menu.pack(side=LEFT)
+        exitButton = Button(self.optionsWindow, text="Cerrar", command=self.optionsWindow.destroy)
+        exitButton.grid(row=4, column=1, columnspan=2, pady=20)
 
-        boton_cerrar = Button(self.ventana_opciones, text="Cerrar", command=self.ventana_opciones.destroy)
-        boton_cerrar.pack(side=BOTTOM)
+    def time(self)->None:
+        if self.timeHabilited:
+            self.time_actual = int(time.time() - self.timeInicio)
+            self.contadortime.config(text="time transcurrido: " + str(self.time_actual), font=("Arial 15"))
+            self.root.after(1000, self.time) 
 
-    def tiempo(self)->None:
-        if self.tiempoHabilitado:
-            self.tiempo_actual = int(time.time() - self.tiempoInicio)
-            self.contadorTiempo.config(text="Tiempo transcurrido: " + str(self.tiempo_actual), font=("Arial 15"))
-            self.root.after(1000, self.tiempo) 
-
-    def generarBotones(self)->None:
+    def generateButtons(self)->None:
         filas, columnas = self.find_dimensions(self.current_difficulty)
-        self.listaBotones = []  
+        self.buttonsList = []  
 
         for i in range(filas):
             fila_botones = [] 
             for j in range(columnas):
                 btn = Button(self.frame, width=6, height=3, text="", font=("Arial 8 bold"), bg="grey")
-                btn.bind('<Button-1>', lambda event, c=(i, j): self.slotPulsado(c))
-                btn.bind('<Button-3>', lambda event, c=(i, j): self.colocarBandera(c))
+                btn.bind('<Button-1>', lambda event, c=(i, j): self.slotPressed(c))
+                btn.bind('<Button-3>', lambda event, c=(i, j): self.placeFlag(c))
                 btn.grid(column=j + 1, row=i + 1, sticky='nsew')  
                 fila_botones.append(btn) 
-            self.listaBotones.append(fila_botones)  
+            self.buttonsList.append(fila_botones)  
 
-    def bombasRandom(self)->None:
+    def bombsRandom(self)->None:
         total_casillas = self.current_difficulty
         filas, columnas = self.find_dimensions(total_casillas)
-        self.bombas = random.sample(range(total_casillas), total_casillas // 4)
-        self.setFlags(len(self.bombas)) 
-        for bomba in self.bombas:
+        self.bombs = random.sample(range(total_casillas), total_casillas // 4)
+        self.setFlags(len(self.bombs)) 
+        for bomba in self.bombs:
             fila, columna = divmod(bomba, columnas)
-            self.listaBotones[fila][columna].config(command=lambda i=bomba: self.revealBombas(self.bombas))
+            self.buttonsList[fila][columna].config(command=lambda i=bomba: self.revealBombas(self.bombs))
     
     def checkWin(self)->None:
         buttons_discovered = 0
-        total_safe_buttons = self.current_difficulty - len(self.bombas)
+        total_safe_buttons = self.current_difficulty - len(self.bombs)
         
-        for i in range(len(self.listaBotones)):
-            for j in range(len(self.listaBotones[i])):
-                button = self.listaBotones[i][j]
-                if (i * len(self.listaBotones[i]) + j) not in self.bombas and button['bg'] != 'grey':
+        for i in range(len(self.buttonsList)):
+            for j in range(len(self.buttonsList[i])):
+                button = self.buttonsList[i][j]
+                if (i * len(self.buttonsList[i]) + j) not in self.bombs and button['bg'] != 'grey':
                     buttons_discovered += 1
 
         if buttons_discovered == total_safe_buttons:
-            self.tiempoHabilitado = False
-            Data.addStats(self.file_path,self.player.get(), self.tiempo_actual, self.difficultyToString(self.current_difficulty))
+            self.timeHabilited = False
+            Data.addStats(self.file_path,self.player.get(), self.time_actual, self.difficultyToString(self.current_difficulty))
             messagebox.showinfo("Victory", "¡Has ganado el juego!")
             self.resetGame()
 
@@ -201,17 +216,18 @@ class Minesweeper:
         filas, columnas = self.find_dimensions(self.current_difficulty)
         for i in index:
             fila, columna = divmod(i, columnas)
-            if self.listaBotones[fila][columna]['bg'] != 'orange':
-                self.listaBotones[fila][columna].config(bg='red', image=self.bomb)
+            if self.buttonsList[fila][columna]['bg'] != 'orange':
+                self.buttonsList[fila][columna].config(bg='red', image=self.bomb)
                 explosionPower+=1
-        self.shakeWindow(explosionPower)
-        self.tiempoHabilitado = False
+        if self.isShakeWindowEnabled.get():
+            self.shakeWindow(explosionPower)
+        self.timeHabilited = False
         messagebox.showinfo("Game Over", "Has pulsado una bomba!")
         self.resetGame()
 
     def shakeWindow(self, intensity, duration=2000)->None:
         """
-        Sacude la ventana de Tkinter con una intensidad específica durante un periodo de tiempo.
+        Sacude la ventana de Tkinter con una intensidad específica durante un periodo de time.
 
         Parámetros:
         intensity (int): La intensidad del sacudido.
@@ -249,7 +265,7 @@ class Minesweeper:
         closest_to_square = min(factors, key=lambda x: abs(x[0] - x[1]))
         return closest_to_square
 
-    def contarBombasCercanas(self, index)->int:
+    def countNearbyBombs(self, index)->int:
         count = 0 
         filas, columnas = self.find_dimensions(self.current_difficulty)
         fila, columna = index
@@ -259,7 +275,7 @@ class Minesweeper:
                     continue 
                 nx, ny = columna + dx, fila + dy  
                 if 0 <= nx < columnas and 0 <= ny < filas: 
-                    if (ny * columnas + nx) in self.bombas:  
+                    if (ny * columnas + nx) in self.bombs:  
                         count += 1  
         return count  
 
@@ -287,23 +303,25 @@ class Minesweeper:
 
         return f'#{red:02x}{green:02x}{blue:02x}'
     
-    def slotPulsado(self, index)->None:
+    def slotPressed(self, index)->None:
         filas, columnas = self.find_dimensions(self.current_difficulty)
         fila, columna = index
         
         if not self.inicio:
-            if fila * columnas + columna in self.bombas and self.current_difficulty in [self.difficulty["Easy"], self.difficulty["Normal"]]:
+            self.currentAttemps -= 1
+            if fila * columnas + columna in self.bombs and self.current_difficulty in [self.difficulty["Easy"], self.difficulty["Normal"]]:
                 # Reasignar bomba
                 self.reassignBomb(fila, columna)
+                
+            self.timeInicio = time.time()
+            self.timeHabilited = True
+            self.time()
+            if self.currentAttemps==0:
+                self.inicio = True
             
-            self.tiempoInicio = time.time()
-            self.tiempoHabilitado = True
-            self.tiempo()
-            self.inicio = True
-        
-        if self.listaBotones[fila][columna]['text'] == '' and self.listaBotones[fila][columna]['bg'] == 'grey':
-            bombas_cercanas = self.contarBombasCercanas(index)
-            self.listaBotones[fila][columna].config(bg='SystemButtonFace', text=str(bombas_cercanas) if bombas_cercanas > 0 else '', fg=self.coloration(bombas_cercanas))
+        if self.buttonsList[fila][columna]['text'] == '' and self.buttonsList[fila][columna]['bg'] == 'grey':
+            bombas_cercanas = self.countNearbyBombs(index)
+            self.buttonsList[fila][columna].config(bg='SystemButtonFace', text=str(bombas_cercanas) if bombas_cercanas > 0 else '', fg=self.coloration(bombas_cercanas))
             if bombas_cercanas == 0:
                 for dy in (-1, 0, 1):
                     for dx in (-1, 0, 1):
@@ -312,35 +330,36 @@ class Minesweeper:
                         nx, ny = columna + dx, fila + dy
                         if 0 <= nx < columnas and 0 <= ny < filas:
                             adj_index = (ny, nx)
-                            if adj_index not in self.bombas and self.listaBotones[ny][nx]['text'] == '' and self.listaBotones[ny][nx]['bg'] == 'grey':
-                                self.slotPulsado(adj_index)
+                            if adj_index not in self.bombs and self.buttonsList[ny][nx]['text'] == '' and self.buttonsList[ny][nx]['bg'] == 'grey':
+                                self.slotPressed(adj_index)
             self.checkWin()
 
     def reassignBomb(self, fila, columna)->None:
+        print("Reasigned")
         filas, columnas = self.find_dimensions(self.current_difficulty)
         bomb_index = fila * columnas + columna
-        self.bombas.remove(bomb_index)
+        self.bombs.remove(bomb_index)
 
-        available_spots = set(range(self.current_difficulty)) - set(self.bombas) - {bomb_index}
+        available_spots = set(range(self.current_difficulty)) - set(self.bombs) - {bomb_index}
         new_bomb = random.choice(list(available_spots))
-        self.bombas.append(new_bomb)
+        self.bombs.append(new_bomb)
         
         # Actualizar el comando del nuevo botón de bomba
         new_fila, new_columna = divmod(new_bomb, columnas)
-        self.listaBotones[new_fila][new_columna].config(command=lambda i=new_bomb: self.revealBombas(self.bombas))
+        self.buttonsList[new_fila][new_columna].config(command=lambda i=new_bomb: self.revealBombas(self.bombs))
         
         # Eliminar el comando del botón donde se quitó la bomba
-        self.listaBotones[fila][columna].config(command=lambda: None)
+        self.buttonsList[fila][columna].config(command=lambda: None)
 
-    def colocarBandera(self, index)->None:
+    def placeFlag(self, index)->None:
         fila, columna = index
-        if self.listaBotones[fila][columna]['bg'] == 'grey':
+        if self.buttonsList[fila][columna]['bg'] == 'grey':
             if self.flags > 0:
-                self.listaBotones[fila][columna].config(bg='orange', image=self.flag)
+                self.buttonsList[fila][columna].config(bg='orange', image=self.flag)
                 self.flags -= 1
                 self.updateFlagsCounter()
-        elif self.listaBotones[fila][columna]['bg'] == 'orange':
-            self.listaBotones[fila][columna].config(bg='grey', image=self.transparent_image)
+        elif self.buttonsList[fila][columna]['bg'] == 'orange':
+            self.buttonsList[fila][columna].config(bg='grey', image=self.transparent_image)
             self.flags += 1
             self.updateFlagsCounter()
 
@@ -348,18 +367,19 @@ class Minesweeper:
         self.flags_counter.config(text="Banderas disponibles: " + str(self.flags))
 
     def resetGame(self)->None:
-        self.tiempoHabilitado = False
-        self.contadorTiempo.config(text="Tiempo transcurrido: " + str(0), font=("Arial 15"))
-        for fila in self.listaBotones:
+        self.timeHabilited = False
+        self.currentAttemps = self.defaultNoInstaLoseAttemps
+        self.contadortime.config(text="time transcurrido: " + str(0), font=("Arial 15"))
+        for fila in self.buttonsList:
             for boton in fila:
                 boton.unbind('<Button-1>')
                 boton.unbind('<Button-3>')
                 boton.destroy()
-        self.listaBotones = []
+        self.buttonsList = []
         self.frame.pack_forget()
         self.frame.pack()
-        self.generarBotones()
-        self.bombasRandom()
+        self.generateButtons()
+        self.bombsRandom()
         self.inicio = False
         self.updateFlagsCounter()
 
@@ -372,9 +392,11 @@ def debugConsole()->None:
             l = traceback.format_exc()
             print(f"Error al ejecutar el comando: {e} {l}")
 
-if __name__ == "__main__":
+if __name__ == "__main__" and os.path.isfile("img/coconut/coconut.jpeg"):
     hilo_consola = threading.Thread(target=debugConsole, daemon=True)
     hilo_consola.start()
     root = Tk() 
     app = Minesweeper(root)  
     root.mainloop()  
+else:
+    messagebox.showerror("Error", "Hubo un error fatal debido a la falta de un archivo esencial para la ejecucion.") 
