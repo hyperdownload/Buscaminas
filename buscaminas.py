@@ -41,69 +41,93 @@ class ModManager:
 
 class Minesweeper:
     def __init__(self, root)->None:
+        """
+        Esta es la función de inicialización para la clase del juego "Siria Simulator". 
+        Configura la ventana principal, carga las imágenes y establece las variables iniciales.
+
+        Parámetros:
+        root (Tk): La ventana principal del juego.
+
+        Ejemplo:
+        >>> game = Game(root)
+        # Inicializa el juego con la ventana principal 'root'.
+        """
         self.root = root 
-        self.frame = Frame(self.root)  
-        self.frame.pack()  
-        self.root.title("Siria Simulator") 
-        self.root.iconbitmap("img/bomba.ico")  
-        self.root.resizable(False, False)  
-        self.frame.config(width=400, height=400) 
-        self.navbar = Menu(self.root)
-        self.root.config(menu=self.navbar)
-        self.transparent_image = PhotoImage(width=1, height=1)
+        self.frame = Frame(self.root)  # Crea un nuevo marco en la ventana principal
+        self.frame.pack()  # Empaqueta el marco para que se muestre en la ventana
+        self.root.title("Siria Simulator")  # Establece el título de la ventana
+        self.root.iconbitmap("img/bomba.ico")  # Establece el ícono de la ventana
+        self.root.resizable(False, False)  # Hace que la ventana no sea redimensionable
+        self.frame.config(width=400, height=400)  # Configura el tamaño del marco
+        self.navbar = Menu(self.root)  # Crea una nueva barra de navegación
+        self.root.config(menu=self.navbar)  # Configura la barra de navegación de la ventana
+        self.transparent_image = PhotoImage(width=1, height=1)  # Crea una imagen transparente para usarla como imagen predeterminada en los botones
         
         # Mod Manager
-        self.mod_manager = ModManager()
-        self.mod_manager.apply_mods(self)
+        self.mod_manager = ModManager()  # Crea un nuevo administrador de mods
+        self.mod_manager.apply_mods(self)  # Aplica los mods al juego
         
-        self.player=tk.StringVar()
-        self.player.set("Player")
-        self.file_path = 'stats.csv'
-        self.file_menu = Menu(self.navbar, tearoff=0)
-        self.file_menu.add_command(label="Nuevo Juego", command=self.resetGame)
-        self.file_menu.add_command(label="Stats", command=self.stats)
-        self.file_menu.add_command(label="Opciones", command=self.options)
-        self.file_menu.add_command(label="Salir", command=self.root.quit)
-        self.navbar.add_cascade(label="Archivo", menu=self.file_menu)
+        self.player=tk.StringVar()  # Crea una variable de cadena para almacenar el nombre del jugador
+        self.player.set("Player")  # Establece el nombre del jugador por defecto como "Player"
+        self.file_path = 'stats.csv'  # Establece la ruta del archivo donde se almacenan las estadísticas
+        self.file_menu = Menu(self.navbar, tearoff=0)  # Crea un nuevo menú en la barra de navegación
+        self.file_menu.add_command(label="Nuevo Juego", command=self.resetGame)  # Agrega un comando para iniciar un nuevo juego
+        self.file_menu.add_command(label="Stats", command=self.stats)  # Agrega un comando para mostrar las estadísticas
+        self.file_menu.add_command(label="Opciones", command=self.options)  # Agrega un comando para abrir la ventana de opciones
+        self.file_menu.add_command(label="Salir", command=self.root.quit)  # Agrega un comando para salir del juego
+        self.navbar.add_cascade(label="Archivo", menu=self.file_menu)  # Agrega el menú a la barra de navegación
 
-        self.difficulty = {"Easy": 40, "Normal": 64, "Hard": 81, "ELDETONACULOS":150}
-        self.current_difficulty = self.difficulty["Easy"]
+        self.difficulty = {"Easy": 40, "Normal": 64, "Hard": 81, "ELDETONACULOS":150}  # Define los niveles de dificultad
+        self.current_difficulty = self.difficulty["Easy"]  # Establece la dificultad actual como "Easy"
 
-        self.buttonsList = []  
-        self.reset = False 
-        self.inicio = False 
-        self.timeInicio = time.time()  
-        self.flags = 0  
-        self.bombs = [] 
-        self.contadortime = Label(self.frame)  
-        self.contadortime.grid(column=1, row=0, columnspan=4) 
-        self.flags_counter = Label(self.frame, text="Banderas disponibles: " + str(self.flags), font=("Arial 15")) 
-        self.flags_counter.grid(column=5, row=0, columnspan=4)  
+        self.buttonsList = []  # Crea una lista para almacenar los botones del juego
+        self.reset = False  # Establece la variable de reinicio en False
+        self.inicio = False  # Establece la variable de inicio en False
+        self.timeInicio = time.time()  # Almacena el tiempo de inicio del juego
+        self.flags = 0  # Inicializa el contador de banderas en 0
+        self.bombs = []  # Crea una lista para almacenar las bombas
+        self.contadortime = Label(self.frame)  # Crea una etiqueta para mostrar el tiempo
+        self.contadortime.grid(column=1, row=0, columnspan=4)  # Coloca la etiqueta en el marco
+        self.flags_counter = Label(self.frame, text="Banderas disponibles: " + str(self.flags), font=("Arial 15"))  # Crea una etiqueta para mostrar las banderas disponibles
+        self.flags_counter.grid(column=5, row=0, columnspan=4)  # Coloca la etiqueta en el marco
         
-        self.timeHabilited = False  
+        self.timeHabilited = False  # Establece la variable de tiempo habilitado en False
         # Imagenes originales
-        img_bomb_original = Image.open("img\\bomba3.png")
-        img_flag_original = Image.open("img\\bandera.png")
+        img_bomb_original = Image.open("img\\bomba3.png")  # Abre la imagen original de la bomba
+        img_flag_original = Image.open("img\\bandera.png")  # Abre la imagen original de la bandera
 
         # Redimensionamiento de imagenes
-        img_bomb_rescaled = img_bomb_original.resize((50, 50), Image.Resampling.LANCZOS) 
-        img_flag_rescaled = img_flag_original.resize((50, 50), Image.Resampling.LANCZOS)  
+        img_bomb_rescaled = img_bomb_original.resize((50, 50), Image.Resampling.LANCZOS)  # Redimensiona la imagen de la bomba
+        img_flag_rescaled = img_flag_original.resize((50, 50), Image.Resampling.LANCZOS)  # Redimensiona la imagen de la bandera
 
         # Conversion a un formato que acepte tk
-        self.bomb = ImageTk.PhotoImage(img_bomb_rescaled)
-        self.flag = ImageTk.PhotoImage(img_flag_rescaled)
+        self.bomb = ImageTk.PhotoImage(img_bomb_rescaled)  # Convierte la imagen de la bomba a un formato que Tkinter pueda manejar
+        self.flag = ImageTk.PhotoImage(img_flag_rescaled)  # Convierte la imagen de la bandera a un formato que Tkinter pueda manejar
         
         #Opciones
-        self.isShakeWindowEnabled = tk.BooleanVar()
-        self.isShakeWindowEnabled.set(True)
-        self.defaultNoInstaLoseAttemps = 3
+        self.isShakeWindowEnabled = tk.BooleanVar()  # Crea una variable booleana para almacenar si la opción de agitar la ventana está habilitada
+        self.isShakeWindowEnabled.set(True)  # Establece la opción de agitar la ventana en True
+        self.defaultNoInstaLoseAttemps = 3  # Establece el número predeterminado de intentos antes de perder instantáneamente
         
-        self.currentAttemps = self.defaultNoInstaLoseAttemps
+        self.currentAttemps = self.defaultNoInstaLoseAttemps  # Establece los intentos actuales en el número predeterminado de intentos
         
-        self.generateButtons() 
-        self.bombsRandom()  
+        self.generateButtons()  # Genera los botones del juego
+        self.bombsRandom()  # Coloca las bombas de manera aleatoria 
     
     def difficultyToString(self, difficulty)->str:
+        """
+        Esta función convierte un valor de dificultad numérico en una cadena de texto.
+
+        Parámetros:
+        difficulty (int): Un valor numérico que representa la dificultad. Este valor debe ser una clave en el diccionario self.difficulty.
+
+        Retorna:
+        str: Una cadena de texto que representa la dificultad. Los posibles valores de retorno son "Easy", "Normal", "Hard", y "ELDETONACULOS".
+
+        Ejemplo:
+        >>> difficultyToString(self, self.difficulty["Easy"])
+        'Easy'
+        """
         if difficulty == self.difficulty["Easy"]:
             return "Easy"
         elif difficulty == self.difficulty["Normal"]:
@@ -114,18 +138,37 @@ class Minesweeper:
             return "ELDETONACULOS"
         
     def stats(self)->None:
+        """
+        Esta función muestra una ventana con las estadísticas de los jugadores.
+
+        Crea una nueva ventana (Toplevel) en la que se muestran las estadísticas de los jugadores,
+        incluyendo el nombre del jugador, el tiempo y la dificultad.
+
+        Las estadísticas se obtienen a través de la función getStats del módulo Data, que toma como 
+        parámetro la ruta del archivo donde se almacenan las estadísticas.
+
+        """
         self.statsWindow = Toplevel(self.root)
         self.statsWindow.title("Estadísticas")
         self.statsWindow.geometry("300x200")
-       
+    
         stats = Data.getStats(self.file_path)
 
         for i, (username, score, dif) in enumerate(stats):
             Label(self.statsWindow, text=f"Jugador:{username}").grid(row=i, column=0, padx=10, pady=5)
             Label(self.statsWindow, text=f"time:{score}s").grid(row=i, column=1, padx=10, pady=5)
             Label(self.statsWindow, text=f"Dificultad:{dif}").grid(row=i, column=2, padx=10, pady=5)
+
     
     def options(self) -> None:
+        """
+        Esta función abre una ventana de opciones donde el usuario puede cambiar la dificultad del juego,
+        ingresar su nombre y habilitar o deshabilitar el movimiento de la ventana al perder.
+
+        La ventana de opciones incluye un menú desplegable para seleccionar la dificultad, un campo de entrada
+        para el nombre del jugador, un botón para aplicar los cambios, un checkbox para habilitar o deshabilitar
+        el movimiento de la ventana al perder y un botón para cerrar la ventana de opciones.
+        """
         self.optionsWindow = Toplevel(self.root)
         self.optionsWindow.title("Opciones")
         self.optionsWindow.geometry("300x250")
@@ -162,68 +205,158 @@ class Minesweeper:
         exitButton.grid(row=4, column=1, columnspan=2, pady=20)
 
     def time(self)->None:
-        if self.timeHabilited:
-            self.time_actual = int(time.time() - self.timeInicio)
+        """
+        Esta función actualiza el tiempo transcurrido en el juego cada segundo.
+
+        Si la variable 'timeHabilited' es True, calcula el tiempo actual restando el tiempo de inicio
+        al tiempo actual. Luego, actualiza el texto de la etiqueta 'contadortime' con el tiempo transcurrido.
+        Despues, llama a sí misma después de 1000 milisegundos (1 segundo).
+
+        """
+        if self.timeHabilited:  # Comprueba si el tiempo está habilitado
+            self.time_actual = int(time.time() - self.timeInicio)  # Calcula el tiempo actual
+            # Actualiza el texto de la etiqueta 'contadortime' con el tiempo transcurrido
             self.contadortime.config(text="time transcurrido: " + str(self.time_actual), font=("Arial 15"))
-            self.root.after(1000, self.time) 
+            self.root.after(1000, self.time)  # Llama a la función 'time' después de 1 segundo
 
     def generateButtons(self)->None:
-        filas, columnas = self.find_dimensions(self.current_difficulty)
-        self.buttonsList = []  
+        """
+        Esta función genera los botones del juego en función de la dificultad actual.
 
-        for i in range(filas):
-            fila_botones = [] 
-            for j in range(columnas):
+        Primero, encuentra las dimensiones del tablero de juego en función de la dificultad actual.
+        Luego, crea una lista de botones para cada fila del tablero. Cada botón se configura con un 
+        ancho, alto, texto, fuente y color de fondo específicos. Además, se vinculan dos eventos a cada 
+        botón: un clic izquierdo del mouse que llama a la función 'slotPressed' y un clic derecho del 
+        mouse que llama a la función 'placeFlag'. Finalmente, cada botón se coloca en el marco usando 
+        la función 'grid'.
+
+        """
+        filas, columnas = self.find_dimensions(self.current_difficulty)  # Encuentra las dimensiones del tablero de juego
+        self.buttonsList = []  # Crea una lista vacía para almacenar los botones
+
+        for i in range(filas):  # Para cada fila en el tablero de juego
+            fila_botones = []  # Crea una lista vacía para almacenar los botones de la fila
+            for j in range(columnas):  # Para cada columna en la fila
+                # Crea un nuevo botón con las especificaciones dadas
                 btn = Button(self.frame, width=6, height=3, text="", font=("Arial 8 bold"), bg="grey")
+                # Vincula un clic izquierdo del mouse al botón para llamar a la función 'slotPressed'
                 btn.bind('<Button-1>', lambda event, c=(i, j): self.slotPressed(c))
+                # Vincula un clic derecho del mouse al botón para llamar a la función 'placeFlag'
                 btn.bind('<Button-3>', lambda event, c=(i, j): self.placeFlag(c))
+                # Coloca el botón en el marco en la posición especificada
                 btn.grid(column=j + 1, row=i + 1, sticky='nsew')  
-                fila_botones.append(btn) 
-            self.buttonsList.append(fila_botones)  
+                fila_botones.append(btn)  # Agrega el botón a la lista de botones de la fila
+            self.buttonsList.append(fila_botones)  # Agrega la lista de botones de la fila a la lista de botones del juego  
 
     def bombsRandom(self)->None:
-        total_casillas = self.current_difficulty
-        filas, columnas = self.find_dimensions(total_casillas)
+        """
+        Esta función genera las bombas de manera aleatoria en el tablero del juego.
+
+        Primero, calcula el total de casillas en el tablero en función de la dificultad actual.
+        Luego, selecciona una muestra aleatoria de casillas para colocar las bombas. El número de bombas
+        es un cuarto del total de casillas. Después, establece el número de banderas igual al número de bombas.
+        Finalmente, para cada bomba, calcula su posición en el tablero y configura el botón correspondiente
+        para revelar las bombas cuando se presiona.
+
+        """
+        total_casillas = self.current_difficulty  # Calcula el total de casillas en el tablero
+        filas, columnas = self.find_dimensions(total_casillas)  # Encuentra las dimensiones del tablero
+        # Selecciona una muestra aleatoria de casillas para colocar las bombas
         self.bombs = random.sample(range(total_casillas), total_casillas // 4)
-        self.setFlags(len(self.bombs)) 
-        for bomba in self.bombs:
-            fila, columna = divmod(bomba, columnas)
+        self.setFlags(len(self.bombs))  # Establece el número de banderas igual al número de bombas
+        for bomba in self.bombs:  # Para cada bomba
+            fila, columna = divmod(bomba, columnas)  # Calcula su posición en el tablero
+            # Configura el botón correspondiente para revelar las bombas cuando se presiona
             self.buttonsList[fila][columna].config(command=lambda i=bomba: self.revealBombas(self.bombs))
     
     def checkWin(self)->None:
-        buttons_discovered = 0
-        total_safe_buttons = self.current_difficulty - len(self.bombs)
-        
-        for i in range(len(self.buttonsList)):
-            for j in range(len(self.buttonsList[i])):
-                button = self.buttonsList[i][j]
-                if (i * len(self.buttonsList[i]) + j) not in self.bombs and button['bg'] != 'grey':
-                    buttons_discovered += 1
+        """
+        Esta función verifica si el jugador ha ganado el juego.
 
+        Primero, calcula el número total de botones seguros (es decir, botones que no tienen bombas) restando
+        el número de bombas de la dificultad actual. Luego, recorre todos los botones en el tablero. Si un botón
+        no tiene una bomba y no es gris (es decir, ha sido presionado), incrementa el contador de botones descubiertos.
+
+        Si el número de botones descubiertos es igual al número total de botones seguros, entonces el jugador ha ganado
+        el juego. En este caso, deshabilita el tiempo, agrega las estadísticas del juego al archivo de estadísticas,
+        muestra un mensaje de victoria y reinicia el juego.
+
+        Ejemplo:
+        >>> checkWin(self)
+        # Verifica si el jugador ha ganado el juego.
+        """
+        buttons_discovered = 0  # Inicializa el contador de botones descubiertos
+        total_safe_buttons = self.current_difficulty - len(self.bombs)  # Calcula el número total de botones seguros
+        
+        for i in range(len(self.buttonsList)):  # Para cada fila en la lista de botones
+            for j in range(len(self.buttonsList[i])):  # Para cada botón en la fila
+                button = self.buttonsList[i][j]  # Obtiene el botón
+                # Si el botón no tiene una bomba y no es gris (ha sido presionado)
+                if (i * len(self.buttonsList[i]) + j) not in self.bombs and button['bg'] != 'grey':
+                    buttons_discovered += 1  # Incrementa el contador de botones descubiertos
+
+        # Si el número de botones descubiertos es igual al número total de botones seguros
         if buttons_discovered == total_safe_buttons:
-            self.timeHabilited = False
+            self.timeHabilited = False  # Deshabilita el tiempo
+            # Agrega las estadísticas del juego al archivo de estadísticas
             Data.addStats(self.file_path,self.player.get(), self.time_actual, self.difficultyToString(self.current_difficulty))
-            messagebox.showinfo("Victory", "¡Has ganado el juego!")
-            self.resetGame()
+            messagebox.showinfo("Victory", "¡Has ganado el juego!")  # Muestra un mensaje de victoria
+            self.resetGame()  # Reinicia el juego
 
     def setFlags(self, flags)->None:
-        self.flags = flags
+        """
+        Esta función establece el número de banderas disponibles y actualiza el contador de banderas.
+
+        Primero, establece el número de banderas disponibles en el valor pasado como argumento.
+        Luego, actualiza el texto del contador de banderas para reflejar el número de banderas disponibles.
+        Finalmente, llama a la función 'updateFlagsCounter' para actualizar el contador de banderas.
+
+        Parámetros:
+        flags (int): El número de banderas disponibles.
+
+        Ejemplo:
+        >>> setFlags(self, 10)
+        # Establece el número de banderas disponibles en 10 y actualiza el contador de banderas.
+        """
+        self.flags = flags  # Establece el número de banderas disponibles
+        # Actualiza el texto del contador de banderas para reflejar el número de banderas disponibles
         self.flags_counter.config(text="Banderas disponibles: " + str(flags))
-        self.updateFlagsCounter()
+        self.updateFlagsCounter()  # Actualiza el contador de banderas
 
     def revealBombas(self, index)->None:
-        explosionPower=0
-        filas, columnas = self.find_dimensions(self.current_difficulty)
-        for i in index:
-            fila, columna = divmod(i, columnas)
+        """
+        Esta función revela las bombas en el tablero del juego cuando se presiona un botón que contiene una bomba.
+
+        Primero, inicializa la potencia de la explosión en 0. Luego, calcula las dimensiones del tablero de juego
+        en función de la dificultad actual. Después, para cada índice en la lista de índices pasada como argumento,
+        calcula la posición del botón correspondiente en el tablero. Si el botón no es naranja (es decir, no tiene una bandera),
+        cambia el color de fondo del botón a rojo, establece la imagen del botón en la imagen de la bomba e incrementa la potencia de la explosión.
+
+        Si la opción de agitar la ventana está habilitada, llama a la función 'shakeWindow' con la potencia de la explosión como argumento.
+        Luego, deshabilita el tiempo, muestra un mensaje de "Game Over" y reinicia el juego.
+
+        Parámetros:
+        index (list): Una lista de índices que representan las posiciones de las bombas en el tablero del juego.
+
+        Ejemplo:
+        >>> revealBombas(self, [10, 15, 20])
+        # Revela las bombas en las posiciones 10, 15 y 20 del tablero del juego.
+        """
+        explosionPower=0  # Inicializa la potencia de la explosión
+        filas, columnas = self.find_dimensions(self.current_difficulty)  # Calcula las dimensiones del tablero de juego
+        for i in index:  # Para cada índice en la lista de índices
+            fila, columna = divmod(i, columnas)  # Calcula la posición del botón correspondiente en el tablero
+            # Si el botón no es naranja (no tiene una bandera)
             if self.buttonsList[fila][columna]['bg'] != 'orange':
+                # Cambia el color de fondo del botón a rojo
                 self.buttonsList[fila][columna].config(bg='red', image=self.bomb)
-                explosionPower+=1
+                explosionPower+=1  # Incrementa la potencia de la explosión
+        # Si la opción de agitar la ventana está habilitada
         if self.isShakeWindowEnabled.get():
-            self.shakeWindow(explosionPower)
-        self.timeHabilited = False
-        messagebox.showinfo("Game Over", "Has pulsado una bomba!")
-        self.resetGame()
+            self.shakeWindow(explosionPower)  # Agita la ventana
+        self.timeHabilited = False  # Deshabilita el tiempo
+        messagebox.showinfo("Game Over", "Has pulsado una bomba!")  # Muestra un mensaje de "Game Over"
+        self.resetGame()  # Reinicia el juego
 
     def shakeWindow(self, intensity, duration=2000)->None:
         """
@@ -257,27 +390,80 @@ class Minesweeper:
         shake()
     
     def find_factors(self, n)->int:
+        """
+        Esta función encuentra todos los factores de un número dado 'n'.
+
+        Genera una lista de tuplas, donde cada tupla contiene dos factores de 'n' que se multiplican para obtener 'n'.
+        Solo considera los factores hasta la raíz cuadrada de 'n' para evitar duplicados.
+
+        Parámetros:
+        n (int): El número del cual encontrar los factores.
+
+        Retorna:
+        list: Una lista de tuplas, donde cada tupla contiene dos factores de 'n'.
+
+        Ejemplo:
+        >>> find_factors(self, 10)
+        [(1, 10), (2, 5)]
+        """
         factors = [(i, n // i) for i in range(1, int(n**0.5) + 1) if n % i == 0]
         return factors
 
     def find_dimensions(self, n)->int:
-        factors = self.find_factors(n)
+        """
+        Esta función encuentra las dimensiones que están más cerca de ser cuadradas para un número dado 'n'.
+
+        Primero, encuentra todos los factores de 'n' usando la función 'find_factors'. Luego, de todos los pares de factores,
+        selecciona el par que está más cerca de ser un cuadrado. Esto se hace encontrando el par de factores cuya diferencia es mínima.
+
+        Parámetros:
+        n (int): El número del cual encontrar las dimensiones.
+
+        Retorna:
+        tuple: Una tupla que contiene las dos dimensiones.
+
+        Ejemplo:
+        >>> find_dimensions(self, 10)
+        (2, 5)
+        """
+        factors = self.find_factors(n)  # Encuentra todos los factores de 'n'
+        # De todos los pares de factores, selecciona el par que está más cerca de ser un cuadrado
         closest_to_square = min(factors, key=lambda x: abs(x[0] - x[1]))
         return closest_to_square
 
     def countNearbyBombs(self, index)->int:
-        count = 0 
-        filas, columnas = self.find_dimensions(self.current_difficulty)
-        fila, columna = index
-        for dy in (-1, 0, 1):  
-            for dx in (-1, 0, 1): 
-                if dx == 0 and dy == 0:
-                    continue 
-                nx, ny = columna + dx, fila + dy  
+        """
+        Esta función cuenta el número de bombas que están cerca de una casilla dada en el tablero del juego.
+
+        Primero, inicializa un contador de bombas en 0. Luego, calcula las dimensiones del tablero de juego
+        en función de la dificultad actual. Después, para cada casilla en un radio de una casilla alrededor
+        de la casilla dada (incluyendo las diagonales), si la casilla está dentro del tablero y contiene una bomba,
+        incrementa el contador de bombas.
+
+        Parámetros:
+        index (tuple): Una tupla que contiene las coordenadas (fila, columna) de la casilla.
+
+        Retorna:
+        int: El número de bombas que están cerca de la casilla.
+
+        Ejemplo:
+        >>> countNearbyBombs(self, (1, 1))
+        # Cuenta el número de bombas que están cerca de la casilla en la fila 1, columna 1.
+        """
+        count = 0  # Inicializa el contador de bombas
+        filas, columnas = self.find_dimensions(self.current_difficulty)  # Calcula las dimensiones del tablero de juego
+        fila, columna = index  # Obtiene las coordenadas de la casilla
+        for dy in (-1, 0, 1):  # Para cada desplazamiento en las filas
+            for dx in (-1, 0, 1):  # Para cada desplazamiento en las columnas
+                if dx == 0 and dy == 0:  # Si el desplazamiento es 0 en ambas direcciones (es decir, la casilla misma)
+                    continue  # Continúa con la siguiente iteración
+                nx, ny = columna + dx, fila + dy  # Calcula las coordenadas de la casilla vecina
+                # Si la casilla vecina está dentro del tablero
                 if 0 <= nx < columnas and 0 <= ny < filas: 
+                    # Si la casilla vecina contiene una bomba
                     if (ny * columnas + nx) in self.bombs:  
-                        count += 1  
-        return count  
+                        count += 1  # Incrementa el contador de bombas
+        return count  # Retorna el número de bombas
 
     def coloration(self, num)->str:
         """
@@ -304,64 +490,116 @@ class Minesweeper:
         return f'#{red:02x}{green:02x}{blue:02x}'
     
     def slotPressed(self, index)->None:
-        filas, columnas = self.find_dimensions(self.current_difficulty)
-        fila, columna = index
+        """
+        Esta función se ejecuta cuando se presiona un botón en el tablero del juego.
+
+        Primero, verifica si el juego ha comenzado. Si no es así, disminuye el número de intentos actuales,
+        verifica si el botón presionado contiene una bomba y, en caso afirmativo, reasigna la bomba.
+        Luego, inicia el tiempo y verifica si se han agotado los intentos. Si es así, marca el juego como iniciado.
+
+        Después, si el botón presionado está vacío y es gris (es decir, no ha sido presionado ni marcado con una bandera),
+        cuenta el número de bombas cercanas y actualiza el texto y el color del botón en función del número de bombas cercanas.
+        Si no hay bombas cercanas, presiona recursivamente todos los botones vecinos que están vacíos y son grises.
+
+        Finalmente, verifica si el jugador ha ganado el juego.
+
+        Parámetros:
+        index (tuple): Una tupla que contiene las coordenadas (fila, columna) del botón presionado.
+
+        Ejemplo:
+        >>> slotPressed(self, (1, 1))
+        # Presiona el botón en la fila 1, columna 1.
+        """
+        filas, columnas = self.find_dimensions(self.current_difficulty)  # Calcula las dimensiones del tablero de juego
+        fila, columna = index  # Obtiene las coordenadas del botón presionado
         
-        if not self.inicio:
-            self.currentAttemps -= 1
+        if not self.inicio:  # Si el juego no ha comenzado
+            self.currentAttemps -= 1  # Disminuye el número de intentos actuales
+            # Si el botón presionado contiene una bomba y la dificultad actual es "Easy" o "Normal"
             if fila * columnas + columna in self.bombs and self.current_difficulty in [self.difficulty["Easy"], self.difficulty["Normal"]]:
-                # Reasignar bomba
-                self.reassignBomb(fila, columna)
-                
-            self.timeInicio = time.time()
-            self.timeHabilited = True
-            self.time()
-            if self.currentAttemps==0:
-                self.inicio = True
-            
+                self.reassignBomb(fila, columna)  # Reasigna la bomba
+            self.timeInicio = time.time()  # Inicia el tiempo
+            self.timeHabilited = True  # Habilita el tiempo
+            self.time()  # Actualiza el tiempo
+            if self.currentAttemps==0:  # Si se han agotado los intentos
+                self.inicio = True  # Marca el juego como iniciado
+        
+        # Si el botón presionado está vacío y es gris (no ha sido presionado ni marcado con una bandera)
         if self.buttonsList[fila][columna]['text'] == '' and self.buttonsList[fila][columna]['bg'] == 'grey':
-            bombas_cercanas = self.countNearbyBombs(index)
+            bombas_cercanas = self.countNearbyBombs(index)  # Cuenta el número de bombas cercanas
+            # Actualiza el texto y el color del botón en función del número de bombas cercanas
             self.buttonsList[fila][columna].config(bg='SystemButtonFace', text=str(bombas_cercanas) if bombas_cercanas > 0 else '', fg=self.coloration(bombas_cercanas))
-            if bombas_cercanas == 0:
-                for dy in (-1, 0, 1):
-                    for dx in (-1, 0, 1):
-                        if dx == 0 and dy == 0:
-                            continue
-                        nx, ny = columna + dx, fila + dy
+            if bombas_cercanas == 0:  # Si no hay bombas cercanas
+                for dy in (-1, 0, 1):  # Para cada desplazamiento en las filas
+                    for dx in (-1, 0, 1):  # Para cada desplazamiento en las columnas
+                        if dx == 0 and dy == 0:  # Si el desplazamiento es 0 en ambas direcciones (es decir, la casilla misma)
+                            continue  # Continúa con la siguiente iteración
+                        nx, ny = columna + dx, fila + dy  # Calcula las coordenadas de la casilla vecina
+                        # Si la casilla vecina está dentro del tablero
                         if 0 <= nx < columnas and 0 <= ny < filas:
-                            adj_index = (ny, nx)
+                            adj_index = (ny, nx)  # Obtiene el índice de la casilla vecina
+                            # Si la casilla vecina no contiene una bomba y está vacía y es gris
                             if adj_index not in self.bombs and self.buttonsList[ny][nx]['text'] == '' and self.buttonsList[ny][nx]['bg'] == 'grey':
-                                self.slotPressed(adj_index)
-            self.checkWin()
+                                self.slotPressed(adj_index)  # Presiona la casilla vecina
+            self.checkWin()  # Verifica si el jugador ha ganado el juego
 
     def reassignBomb(self, fila, columna)->None:
-        print("Reasigned")
-        filas, columnas = self.find_dimensions(self.current_difficulty)
-        bomb_index = fila * columnas + columna
-        self.bombs.remove(bomb_index)
+        """
+        Esta función reasigna una bomba a una nueva ubicación en el tablero del juego.
 
+        Primero, calcula el índice de la bomba en el tablero de juego y la elimina de la lista de bombas.
+        Luego, calcula los lugares disponibles en el tablero donde se puede colocar la bomba y selecciona uno al azar.
+        Después, agrega la nueva bomba a la lista de bombas y actualiza el comando del botón correspondiente para revelar las bombas cuando se presiona.
+        Finalmente, elimina el comando del botón donde se quitó la bomba.
+
+        Parámetros:
+        fila (int): La fila del botón donde se quitó la bomba.
+        columna (int): La columna del botón donde se quitó la bomba.
+        """
+        print("Reasigned")  # Imprime un mensaje para indicar que la bomba ha sido reasignada
+        filas, columnas = self.find_dimensions(self.current_difficulty)  # Calcula las dimensiones del tablero de juego
+        bomb_index = fila * columnas + columna  # Calcula el índice de la bomba en el tablero de juego
+        self.bombs.remove(bomb_index)  # Elimina la bomba de la lista de bombas
+
+        # Calcula los lugares disponibles en el tablero donde se puede colocar la bomba
         available_spots = set(range(self.current_difficulty)) - set(self.bombs) - {bomb_index}
-        new_bomb = random.choice(list(available_spots))
-        self.bombs.append(new_bomb)
+        new_bomb = random.choice(list(available_spots))  # Selecciona un lugar al azar
+        self.bombs.append(new_bomb)  # Agrega la nueva bomba a la lista de bombas
         
         # Actualizar el comando del nuevo botón de bomba
-        new_fila, new_columna = divmod(new_bomb, columnas)
+        new_fila, new_columna = divmod(new_bomb, columnas)  # Calcula las coordenadas del nuevo botón de bomba
+        # Configura el botón para revelar las bombas cuando se presiona
         self.buttonsList[new_fila][new_columna].config(command=lambda i=new_bomb: self.revealBombas(self.bombs))
         
         # Eliminar el comando del botón donde se quitó la bomba
         self.buttonsList[fila][columna].config(command=lambda: None)
 
     def placeFlag(self, index)->None:
-        fila, columna = index
-        if self.buttonsList[fila][columna]['bg'] == 'grey':
-            if self.flags > 0:
-                self.buttonsList[fila][columna].config(bg='orange', image=self.flag)
-                self.flags -= 1
-                self.updateFlagsCounter()
+        """
+        Esta función coloca o quita una bandera en un botón del tablero del juego.
+
+        Primero, obtiene las coordenadas del botón. Luego, si el botón es gris (es decir, no ha sido presionado ni marcado con una bandera)
+        y todavía quedan banderas disponibles, coloca una bandera en el botón, disminuye el número de banderas disponibles y actualiza el contador de banderas.
+
+        Si el botón es naranja (es decir, tiene una bandera), quita la bandera del botón, aumenta el número de banderas disponibles y actualiza el contador de banderas.
+
+        Parámetros:
+        index (tuple): Una tupla que contiene las coordenadas (fila, columna) del botón.
+
+        """
+        fila, columna = index  # Obtiene las coordenadas del botón
+        # Si el botón es gris (no ha sido presionado ni marcado con una bandera) y todavía quedan banderas disponibles
+        if self.buttonsList[fila][columna]['bg'] == 'grey' and self.flags > 0:
+            # Coloca una bandera en el botón
+            self.buttonsList[fila][columna].config(bg='orange', image=self.flag)
+            self.flags -= 1  # Disminuye el número de banderas disponibles
+            self.updateFlagsCounter()  # Actualiza el contador de banderas
+        # Si el botón es naranja (tiene una bandera)
         elif self.buttonsList[fila][columna]['bg'] == 'orange':
+            # Quita la bandera del botón
             self.buttonsList[fila][columna].config(bg='grey', image=self.transparent_image)
-            self.flags += 1
-            self.updateFlagsCounter()
+            self.flags += 1  # Aumenta el número de banderas disponibles
+            self.updateFlagsCounter()  # Actualiza el contador de banderas
 
     def updateFlagsCounter(self)->None:
         self.flags_counter.config(text="Banderas disponibles: " + str(self.flags))
