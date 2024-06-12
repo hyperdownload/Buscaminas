@@ -1,14 +1,14 @@
-from tkinter import *  
-from tkinter import messagebox 
-import tkinter as tk 
-from tkinter import ttk
-import random
-import time  
-from data import Data, DataTxt
+import os
+import time 
+import random 
 import threading
 import traceback
-import os
+import tkinter as tk 
 import importlib.util
+from tkinter import *  
+from tkinter import ttk
+from data import Data, DataTxt
+from tkinter import messagebox 
 from PIL import Image, ImageTk
 
 class ModManager:
