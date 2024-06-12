@@ -116,3 +116,126 @@ class Data:
                     writer.writerow(stat)
         except FileNotFoundError:
             print(f"El archivo {file_path} no fue encontrado.")
+            
+class DataTxt:
+    def getStats(file_path):
+        """
+        Obtiene las estadísticas completas almacenadas en el archivo de texto.
+
+        :param file_path: Ruta del archivo de texto.
+        :return: Lista de tuplas de estadísticas, donde cada tupla contiene (usuario, tiempo, dificultad).
+        """
+        stats = []
+        try:
+            with open(file_path, mode='r') as file:
+                next(file)  # Saltar la primera línea (encabezados)
+                for line in file:
+                    parts = line.strip().split(',')
+                    if len(parts) >= 3:
+                        try:
+                            # Intenta convertir el segundo elemento a entero
+                            stats.append((parts[0], int(parts[1]), parts[2]))
+                        except ValueError:
+                            print(f"Error al convertir a entero en la línea: {line}")
+                    else:
+                        print(f"La línea no tiene suficientes elementos: {line}")
+        except FileNotFoundError:
+            print(f"El archivo {file_path} no fue encontrado.")
+        return stats
+
+    def getStatPerUser(file_path, username):
+        """
+        Obtiene las estadísticas de un usuario específico.
+
+        :param file_path: Ruta del archivo de texto.
+        :param username: Nombre de usuario para buscar.
+        :return: Tupla de estadísticas del usuario (usuario, tiempo).
+        """
+        try:
+            with open(file_path, mode='r') as file:
+                for line in file:
+                    parts = line.strip().split(',')
+                    if parts[0] == username:
+                        try:
+                            # Intenta convertir el segundo elemento a entero para el usuario específico
+                            return (parts[0], int(parts[1]))
+                        except ValueError:
+                            print(f"Error al convertir a entero en la línea para usuario {username}: {line}")
+        except FileNotFoundError:
+            print(f"El archivo {file_path} no fue encontrado.")
+        return None
+
+    def addStats(file_path, username, score, difficulty):
+        """
+        Agrega nuevas estadísticas al archivo de texto.
+
+        :param file_path: Ruta del archivo de texto.
+        :param username: Nombre de usuario.
+        :param score: Tiempo obtenido.
+        :param difficulty: Dificultad del juego.
+        """
+        try:
+            with open(file_path, mode='a') as file:
+                # Escribe una nueva línea con el nombre de usuario, puntaje y dificultad
+                file.write(f"{username},{score},{difficulty}\n")
+        except FileNotFoundError:
+            print(f"El archivo {file_path} no fue encontrado.")
+        
+        # Después de agregar, se ordenan las estadísticas y se elimina la redundancia
+        DataTxt.orderStats(file_path, "asc")
+        DataTxt.removeRedundancy(file_path)
+
+    def orderStats(file_path, order):
+        """
+        Ordena las estadísticas de usuario y tiempo en el archivo de texto.
+
+        :param file_path: Ruta del archivo de texto.
+        :param order: 'asc' para ordenar de menor a mayor, 'desc' para ordenar de mayor a menor.
+        """
+        stats = DataTxt.getStats(file_path)
+        if order == 'desc':
+            stats.sort(key=lambda x: x[1], reverse=True)  # Ordena en orden descendente por el tiempo (segundo elemento)
+        elif order == 'asc':
+            stats.sort(key=lambda x: x[1])  # Ordena en orden ascendente por el tiempo (segundo elemento)
+        else:
+            print("El parámetro 'order' debe ser 'asc' o 'desc'.")
+
+        try:
+            with open(file_path, mode='w') as file:
+                # Escribe la primera línea como encabezados
+                file.write("username,score,difficulty\n")
+                # Escribe cada estadística ordenada en el archivo
+                for stat in stats:
+                    file.write(f"{stat[0]},{stat[1]},{stat[2]}\n")
+        except FileNotFoundError:
+            print(f"El archivo {file_path} no fue encontrado.")
+
+    def removeRedundancy(file_path):
+        """
+        Elimina la redundancia de datos en el archivo de texto, conservando solo el puntaje más alto para cada jugador.
+
+        :param file_path: Ruta del archivo de texto.
+        """
+        stats = DataTxt.getStats(file_path)
+        player_scores = {}
+
+        # Encuentra y conserva solo el puntaje más alto para cada jugador
+        for player, score, dif in stats:
+            if player in player_scores:
+                if score > player_scores[player][0]:
+                    player_scores[player] = (score, dif)  # Actualiza el puntaje y la dificultad si es más alto
+            else:
+                player_scores[player] = (score, dif)
+
+        # Genera una lista de estadísticas únicas con el puntaje más alto para cada jugador
+        unique_stats = [(player, score, dif) for player, (score, dif) in player_scores.items()]
+
+        try:
+            with open(file_path, mode='w') as file:
+                # Escribe la primera línea como encabezados
+                file.write("username,score,difficulty\n")
+                # Escribe cada estadística única en el archivo
+                for stat in unique_stats:
+                    file.write(f"{stat[0]},{stat[1]},{stat[2]}\n")
+        except FileNotFoundError:
+            print(f"El archivo {file_path} no fue encontrado.")

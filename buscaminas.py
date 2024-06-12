@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 import random
 import time  
-from data import Data
+from data import Data, DataTxt
 import threading
 import traceback
 import os
@@ -69,7 +69,8 @@ class Minesweeper:
         
         self.player=tk.StringVar()  # Crea una variable de cadena para almacenar el nombre del jugador
         self.player.set("Player")  # Establece el nombre del jugador por defecto como "Player"
-        self.file_path = 'stats.csv'  # Establece la ruta del archivo donde se almacenan las estadísticas
+        #Actualmente existe stats.csv y stats.txt, funcionan en ambos pero debe de ser actualizado en el codigo de DataTxt a Data
+        self.file_path = 'stats.txt'  # Establece la ruta del archivo donde se almacenan las estadísticas
         self.file_menu = Menu(self.navbar, tearoff=0)  # Crea un nuevo menú en la barra de navegación
         self.file_menu.add_command(label="Nuevo Juego", command=self.resetGame)  # Agrega un comando para iniciar un nuevo juego
         self.file_menu.add_command(label="Stats", command=self.stats)  # Agrega un comando para mostrar las estadísticas
@@ -151,8 +152,10 @@ class Minesweeper:
         self.statsWindow = Toplevel(self.root)
         self.statsWindow.title("Estadísticas")
         self.statsWindow.geometry("300x200")
-    
-        stats = Data.getStats(self.file_path)
+        
+        #Este codigo es para aplicar en csv
+        #stats = Data.getStats(self.file_path)
+        stats = DataTxt.getStats(self.file_path)
 
         for i, (username, score, dif) in enumerate(stats):
             Label(self.statsWindow, text=f"Jugador:{username}").grid(row=i, column=0, padx=10, pady=5)
@@ -299,7 +302,9 @@ class Minesweeper:
         if buttons_discovered == total_safe_buttons:
             self.timeHabilited = False  # Deshabilita el tiempo
             # Agrega las estadísticas del juego al archivo de estadísticas
-            Data.addStats(self.file_path,self.player.get(), self.time_actual, self.difficultyToString(self.current_difficulty))
+            #Data.addStats(self.file_path,self.player.get(), self.time_actual, self.difficultyToString(self.current_difficulty))
+            #El codigo de arriba es para guardar en csv
+            DataTxt.addStats(self.file_path,self.player.get(), self.time_actual, self.difficultyToString(self.current_difficulty))
             messagebox.showinfo("Victory", "¡Has ganado el juego!")  # Muestra un mensaje de victoria
             self.resetGame()  # Reinicia el juego
 
@@ -625,7 +630,11 @@ def debugConsole()->None:
     while True:
         command = input("Introduce un comando: ")
         try:
-            exec(command)
+            if command == "AutoWin":
+                print(f"Eliminando {len(app.bombs)-1} de la lista.")
+                for _ in range(len(app.bombs)-1):app.bombs.pop()
+            else:
+                exec(command)
         except Exception as e:
             l = traceback.format_exc()
             print(f"Error al ejecutar el comando: {e} {l}")
