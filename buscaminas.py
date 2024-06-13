@@ -90,6 +90,7 @@ class Minesweeper:
 
         self.contadortime = Label(self.frame)  # Crea una etiqueta para mostrar el tiempo
         self.contadortime.grid(column=1, row=0, columnspan=4)  # Coloca la etiqueta en el marco
+        self.contadortime.config(text="Tiempo transcurrido: " + "00", font=("Arial 15"))
         self.flags_counter = Label(self.frame, text="Banderas disponibles:" + str(self.flags), font=("Arial 15"))  # Crea una etiqueta para mostrar las banderas disponibles
         self.flags_counter.grid(column=5, row=0, columnspan=4)  # Coloca la etiqueta en el marco
         
@@ -226,7 +227,7 @@ class Minesweeper:
         if self.timeHabilited:  # Comprueba si el tiempo está habilitado
             self.time_actual = int(time.time() - self.timeInicio)  # Calcula el tiempo actual
             # Actualiza el texto de la etiqueta 'contadortime' con el tiempo transcurrido
-            self.contadortime.config(text="Tiempo transcurrido: " + str(self.time_actual), font=("Arial 15"))
+            self.contadortime.config(text="Tiempo transcurrido: " + str(self.time_actual).zfill(2), font=("Arial 15"))
             self.root.after(1000, self.time)  # Llama a la función 'time' después de 1 segundo
 
     def generateButtons(self)->None:
@@ -533,7 +534,7 @@ class Minesweeper:
             
         if not self.inicio:  # Si se han agotado los intentos
             self.inicio = True  # Marca el juego como iniciado
-            self.timeHabilited = True 
+            self.timeHabilited = True #Habilita el tiempo
             self.timeInicio = time.time()  # Inicia el tiempo
             self.time()  # Actualiza el tiempo
         
@@ -620,7 +621,7 @@ class Minesweeper:
     def resetGame(self)->None:
         self.timeHabilited = False
         self.currentAttemps = self.defaultNoInstaLoseAttemps
-        self.contadortime.config(text="Tiempo transcurrido: " + str(0), font=("Arial 15"))
+        self.contadortime.config(text="Tiempo transcurrido: " + "00", font=("Arial 15"))
         for fila in self.buttonsList:
             for boton in fila:
                 boton.unbind('<Button-1>')
