@@ -87,11 +87,18 @@ class Minesweeper:
         self.timeInicio = time.time()  # Almacena el tiempo de inicio del juego
         self.flags = 0  # Inicializa el contador de banderas en 0
         self.bombs = []  # Crea una lista para almacenar las bombas
+
         self.contadortime = Label(self.frame)  # Crea una etiqueta para mostrar el tiempo
         self.contadortime.grid(column=1, row=0, columnspan=4)  # Coloca la etiqueta en el marco
-        self.flags_counter = Label(self.frame, text="Banderas disponibles: " + str(self.flags), font=("Arial 15"))  # Crea una etiqueta para mostrar las banderas disponibles
+        self.flags_counter = Label(self.frame, text="Banderas disponibles:" + str(self.flags), font=("Arial 15"))  # Crea una etiqueta para mostrar las banderas disponibles
         self.flags_counter.grid(column=5, row=0, columnspan=4)  # Coloca la etiqueta en el marco
         
+        #self.contadortime = Label(self.frame)  # Crea una etiqueta para mostrar el tiempo
+        #self.contadortime.place(x=0, y=20)  # Coloca la etiqueta en el marco en las coordenadas (50, 20)
+
+        #self.flags_counter = Label(self.frame, text="Banderas disponibles:" + str(self.flags), font=("Arial 15"))  # Crea una etiqueta para mostrar las banderas disponibles
+        #self.flags_counter.place(x=0, y=20)  # Coloca la etiqueta en el marco en las coordenadas (200, 20)
+
         self.timeHabilited = False  # Establece la variable de tiempo habilitado en False
         # Imagenes originales
         img_bomb_original = Image.open("img\\bomba3.png")  # Abre la imagen original de la bomba
@@ -219,7 +226,7 @@ class Minesweeper:
         if self.timeHabilited:  # Comprueba si el tiempo está habilitado
             self.time_actual = int(time.time() - self.timeInicio)  # Calcula el tiempo actual
             # Actualiza el texto de la etiqueta 'contadortime' con el tiempo transcurrido
-            self.contadortime.config(text="time transcurrido: " + str(self.time_actual), font=("Arial 15"))
+            self.contadortime.config(text="Tiempo transcurrido: " + str(self.time_actual), font=("Arial 15"))
             self.root.after(1000, self.time)  # Llama a la función 'time' después de 1 segundo
 
     def generateButtons(self)->None:
@@ -325,7 +332,7 @@ class Minesweeper:
         """
         self.flags = flags  # Establece el número de banderas disponibles
         # Actualiza el texto del contador de banderas para reflejar el número de banderas disponibles
-        self.flags_counter.config(text="Banderas disponibles: " + str(flags))
+        self.flags_counter.config(text="Banderas disponibles: " + ("0" + str(self.flags) if self.flags < 10 else str(self.flags)))
         self.updateFlagsCounter()  # Actualiza el contador de banderas
 
     def revealBombas(self, index)->None:
@@ -518,16 +525,17 @@ class Minesweeper:
         filas, columnas = self.find_dimensions(self.current_difficulty)  # Calcula las dimensiones del tablero de juego
         fila, columna = index  # Obtiene las coordenadas del botón presionado
         
-        if not self.inicio:  # Si el juego no ha comenzado
+        if self.currentAttemps!=0:  # Si el juego no ha comenzado
             self.currentAttemps -= 1  # Disminuye el número de intentos actuales
             # Si el botón presionado contiene una bomba y la dificultad actual es "Easy" o "Normal"
             if fila * columnas + columna in self.bombs and self.current_difficulty in [self.difficulty["Easy"], self.difficulty["Normal"]]:
                 self.reassignBomb(fila, columna)  # Reasigna la bomba
+            
+        if not self.inicio:  # Si se han agotado los intentos
+            self.inicio = True  # Marca el juego como iniciado
+            self.timeHabilited = True 
             self.timeInicio = time.time()  # Inicia el tiempo
-            self.timeHabilited = True  # Habilita el tiempo
             self.time()  # Actualiza el tiempo
-            if self.currentAttemps==0:  # Si se han agotado los intentos
-                self.inicio = True  # Marca el juego como iniciado
         
         # Si el botón presionado está vacío y es gris (no ha sido presionado ni marcado con una bandera)
         if self.buttonsList[fila][columna]['text'] == '' and self.buttonsList[fila][columna]['bg'] == 'grey':
@@ -607,12 +615,12 @@ class Minesweeper:
             self.updateFlagsCounter()  # Actualiza el contador de banderas
 
     def updateFlagsCounter(self)->None:
-        self.flags_counter.config(text="Banderas disponibles: " + str(self.flags))
+        self.flags_counter.config(text="Banderas disponibles: " + ("0" + str(self.flags) if self.flags < 10 else str(self.flags)))
 
     def resetGame(self)->None:
         self.timeHabilited = False
         self.currentAttemps = self.defaultNoInstaLoseAttemps
-        self.contadortime.config(text="time transcurrido: " + str(0), font=("Arial 15"))
+        self.contadortime.config(text="Tiempo transcurrido: " + str(0), font=("Arial 15"))
         for fila in self.buttonsList:
             for boton in fila:
                 boton.unbind('<Button-1>')
