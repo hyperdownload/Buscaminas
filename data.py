@@ -1,4 +1,5 @@
 import csv
+import random
 
 class Data:
     def getStats(file_path):
@@ -239,3 +240,14 @@ class DataTxt:
                     file.write(f"{stat[0]},{stat[1]},{stat[2]}\n")
         except FileNotFoundError:
             print(f"El archivo {file_path} no fue encontrado.")
+            
+class Adds:
+    def randomOverText()->str:
+        """Retorna un String seleccionado desde una lista, la cadena de texto es tomada aleatoreamente desde la lista y
+        es retornada.
+
+        :return: Cadena de texto
+        """
+        list = ["JAJAJJAJAAJAJAJAJJAAJAJAJ.", "Capaz este no sea tu juego.", "Sos como adriel pero peor.", "Deberias comprarte unas manos.",
+                "Sos mas malo que patear una embarazada.", "Buscate otro juego.", "El que pierde es ga- PARAAA NI TERMINE."]
+        return random.choice(list)
