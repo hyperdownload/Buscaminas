@@ -7,7 +7,7 @@ import tkinter as tk
 import importlib.util
 from tkinter import *  
 from tkinter import ttk
-from data import Data, DataTxt
+from data import Data, DataTxt, Adds
 from tkinter import messagebox 
 from PIL import Image, ImageTk
 
@@ -116,7 +116,7 @@ class Minesweeper:
         #Opciones
         self.isShakeWindowEnabled = tk.BooleanVar()  # Crea una variable booleana para almacenar si la opción de agitar la ventana está habilitada
         self.isShakeWindowEnabled.set(True)  # Establece la opción de agitar la ventana en True
-        self.defaultNoInstaLoseAttemps = 3  # Establece el número predeterminado de intentos antes de perder instantáneamente
+        self.defaultNoInstaLoseAttemps = 2  # Establece el número predeterminado de intentos antes de perder instantáneamente
         
         self.currentAttemps = self.defaultNoInstaLoseAttemps  # Establece los intentos actuales en el número predeterminado de intentos
         
@@ -167,7 +167,7 @@ class Minesweeper:
 
         for i, (username, score, dif) in enumerate(stats):
             Label(self.statsWindow, text=f"Jugador:{username}").grid(row=i, column=0, padx=10, pady=5)
-            Label(self.statsWindow, text=f"time:{score}s").grid(row=i, column=1, padx=10, pady=5)
+            Label(self.statsWindow, text=f"Time:{score}s").grid(row=i, column=1, padx=10, pady=5)
             Label(self.statsWindow, text=f"Dificultad:{dif}").grid(row=i, column=2, padx=10, pady=5)
 
     
@@ -255,7 +255,7 @@ class Minesweeper:
                 # Vincula un clic derecho del mouse al botón para llamar a la función 'placeFlag'
                 btn.bind('<Button-3>', lambda event, c=(i, j): self.placeFlag(c))
                 # Coloca el botón en el marco en la posición especificada
-                btn.grid(column=j + 1, row=i + 1, sticky='nsew')  
+                btn.grid(padx=1,pady=1,column=j + 1, row=i + 1, sticky='nsew')  
                 fila_botones.append(btn)  # Agrega el botón a la lista de botones de la fila
             self.buttonsList.append(fila_botones)  # Agrega la lista de botones de la fila a la lista de botones del juego  
 
@@ -368,7 +368,7 @@ class Minesweeper:
         if self.isShakeWindowEnabled.get():
             self.shakeWindow(explosionPower)  # Agita la ventana
         self.timeHabilited = False  # Deshabilita el tiempo
-        messagebox.showinfo("Game Over", "Has pulsado una bomba!")  # Muestra un mensaje de "Game Over"
+        messagebox.showinfo("Game Over", Adds.randomOverText())  # Muestra un mensaje de "Game Over"
         self.resetGame()  # Reinicia el juego
 
     def shakeWindow(self, intensity, duration=2000)->None:
@@ -606,12 +606,14 @@ class Minesweeper:
         if self.buttonsList[fila][columna]['bg'] == 'grey' and self.flags > 0:
             # Coloca una bandera en el botón
             self.buttonsList[fila][columna].config(bg='orange', image=self.flag)
+            self.buttonsList[fila][columna]["state"] = tk.DISABLED # Desactiva el botón
             self.flags -= 1  # Disminuye el número de banderas disponibles
             self.updateFlagsCounter()  # Actualiza el contador de banderas
         # Si el botón es naranja (tiene una bandera)
         elif self.buttonsList[fila][columna]['bg'] == 'orange':
             # Quita la bandera del botón
             self.buttonsList[fila][columna].config(bg='grey', image=self.transparent_image)
+            self.buttonsList[fila][columna]["state"] = tk.NORMAL # Vuelve a activar el boton
             self.flags += 1  # Aumenta el número de banderas disponibles
             self.updateFlagsCounter()  # Actualiza el contador de banderas
 
