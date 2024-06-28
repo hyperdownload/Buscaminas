@@ -255,8 +255,16 @@ class Adds:
                 "Sos mas malo que patear una embarazada.", "Buscate otro juego.", "El que pierde es ga- PARAAA NI TERMINE."]
         return random.choice(list)
     def debug(text)->None:
+        """
+            Solo es un print pero con un mensaje mas marcado para identificar el tipo de mensaje.
+        :param text: String
+        """
         colorama_init()
-        print(f"{Fore.YELLOW}[DEBUG] {Fore.WHITE}{text}{Style.RESET_ALL}.")
+        print(f"{Fore.YELLOW}[DEBUG] {Fore.WHITE}{text}{Style.RESET_ALL}")
     def warning(text)->None:
+        """
+            Solo es un print pero con un mensaje mas marcado para identificar el tipo de mensaje.
+        :param text: String
+        """
         colorama_init()
-        print(f"{Fore.RED}[WARNING] {Fore.WHITE}{text}{Style.RESET_ALL}.")
+        print(f"{Fore.RED}[WARNING] {Fore.WHITE}{text}{Style.RESET_ALL}")
