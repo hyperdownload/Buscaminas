@@ -3,11 +3,11 @@
     "UIbuttonColor": "#000000",
     "buttonFgColor": "#FFFFFF",
     "flagButtonColor": "#FFA500",
-    "pressedButtonColor": "#b4b4b4",
+    "pressedButtonColor": "#120c0a",
     "labelColor": "#000000",
     "labelFgColor": "#FFFFFF",
     "windowColor": "#000000",
     "windowFgColor": "#000000",
-    "entryColor": "#000000",
+    "entryColor": "#1d1412",
     "entryFgColor": "#FFFFFF"
 }

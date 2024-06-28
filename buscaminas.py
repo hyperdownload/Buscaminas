@@ -10,18 +10,27 @@ from tkinter import *
 from tkinter import ttk
 from data import Data, DataTxt, Adds
 from tkinter import messagebox 
-from PIL import Image, ImageTk
-
+try:
+    from PIL import Image, ImageTk
+except:
+    print("Descargando pillow...")
+    os.system("pip install pillow")
+    from PIL import Image, ImageTk
 class ModManager:
     def __init__(self, mod_directory="mods")->None:
         try:
+            Adds.debug("Iniciando ModLoader...")
             self.mod_directory = mod_directory
             self.mods = []
             self.load_mods()
-        except:
+            Adds.debug("Mod loader cargado!")
+        except Exception as e:
+            Adds.warning("Hubo un error en el constructor de ModLoader, mas informacion:\n"
+            f"{e}")
             messagebox.showerror("Error", "Hubo un error cargando los mods debido a un error o incompatibilidad en el mod, se iniciara en vanilla.")
 
     def load_mods(self)->None:
+        Adds.debug("Cargando mods...")
         if not os.path.exists(self.mod_directory):
             os.makedirs(self.mod_directory)
         for filename in os.listdir(self.mod_directory):
@@ -36,6 +45,7 @@ class ModManager:
         self.mods.append(mod)
 
     def apply_mods(self, game)->None:
+        Adds.debug("Aplicando mods...")
         for mod in self.mods:
             if hasattr(mod, 'apply_mod'):
                 mod.apply_mod(game)
@@ -53,6 +63,7 @@ class Minesweeper:
         >>> game = Game(root)
         # Inicializa el juego con la ventana principal 'root'.
         """
+        # Variables de personalizacion grafica
         self.buttonColor = "#000000"
         self.UIbuttonColor = "#000000"
         self.buttonFgColor = "#FFFFFF"
@@ -65,10 +76,10 @@ class Minesweeper:
         self.entryColor = "#000000"
         self.entryFgColor = "#FFFFFF"
         
-        self.loadSettings()
+        self.loadSettings() # Carga a las variables de personalizacion sus datos
         
         self.root = root 
-        self.frame = Frame(self.root)  # Crea un nuevo marco en la ventana principal
+        self.frame = Frame(self.root, bg="cyan")  # Crea un nuevo marco en la ventana principal
         self.frame.pack()  # Empaqueta el marco para que se muestre en la ventana
         self.root.title("Siria Simulator")  # Establece el título de la ventana
         self.root.iconbitmap("img/bomba.ico")  # Establece el ícono de la ventana
@@ -79,6 +90,7 @@ class Minesweeper:
         self.transparent_image = PhotoImage(width=1, height=1)  # Crea una imagen transparente para usarla como imagen predeterminada en los botones
         
         # Mod Manager
+        Adds.debug("Cargando mods...")
         self.mod_manager = ModManager()  # Crea un nuevo administrador de mods
         self.mod_manager.apply_mods(self)  # Aplica los mods al juego
         
@@ -150,6 +162,7 @@ class Minesweeper:
         No retorna ningún valor.
         """
         try:
+            Adds.debug("Cargando configuracion...")
             with open('config.json', 'r') as f:
                 # Abre el archivo "config.json" en modo lectura ('r').
                 # El objeto 'f' representa el archivo abierto.
@@ -168,10 +181,10 @@ class Minesweeper:
                 self.entryColor = data.get('entryColor', self.entryColor)
                 self.entryFgColor = data.get('entryFgColor', self.entryFgColor)
         except FileNotFoundError:
-            print("No se encontró el archivo config.json. Usando valores por defecto.")
+            Adds.warning("No se encontró el archivo config.json. Usando valores por defecto.")
             # Imprime un mensaje si el archivo no existe.
         except json.JSONDecodeError:
-            print("Error al decodificar JSON. Usando valores por defecto.")
+            Adds.warning("Error al decodificar JSON. Usando valores por defecto.")
             # Imprime un mensaje si hay un error al decodificar el JSON.
 
     def saveSettings(self)->None:
@@ -182,6 +195,7 @@ class Minesweeper:
 
         No retorna ningún valor.
         """
+        Adds.debug("Guardando configuracion")
 
         # Obtener datos de los Entry
         self.buttonColor = self.entryButtonColor.get()
@@ -211,16 +225,22 @@ class Minesweeper:
             'entryFgColor': self.entryFgColor
         }
         with open('config.json', 'w') as f:
+            Adds.debug("Escribiendo json...")
             # Abre el archivo "config.json" en modo escritura ('w').
             # El archivo se crea si no existe o se sobrescribe si ya existe.
             # El objeto 'f' representa el archivo abierto.
             json.dump(data, f, indent=4)
             # Escribe los datos (diccionario 'data') en el archivo en formato JSON.
             # El argumento 'indent=4' agrega sangría para una mejor legibilidad.
-        print("Configuración guardada correctamente.")
+        Adds.debug("Configuración guardada correctamente.")
+        self.root.destroy()
+        hilo_consola = threading.Thread(target=debugConsole, daemon=True)
+        hilo_consola.start()
+        root = Tk() 
+        app = Minesweeper(root)  
+        root.mainloop() 
+
         # Imprime un mensaje para indicar que la configuración se guardó con éxito.
-        self.resetGame()
-        # Llama al método 'resetGame()' para restablecer el estado del juego.
 
     def personalization(self)->None:
         """
@@ -437,6 +457,7 @@ class Minesweeper:
 
         def applyInput()->None:
             input_text = self.entry.get()
+            Adds.debug("Opciones cambiadas")
             messagebox.showinfo("Options changed", "Los valores se ajustaron correctamente.")
 
         applyButton = Button(self.optionsWindow, text="Aplicar", command=applyInput, bg=self.UIbuttonColor, fg=self.buttonFgColor)

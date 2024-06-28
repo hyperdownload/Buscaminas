@@ -1,5 +1,8 @@
 import csv
 import random
+from colorama import init as colorama_init
+from colorama import Fore
+from colorama import Style
 
 class Data:
     def getStats(file_path):
@@ -20,7 +23,7 @@ class Data:
                     else:
                         print(f"La fila {reader.line_num} no tiene suficientes elementos.")
         except FileNotFoundError:
-            print(f"El archivo {file_path} no fue encontrado.")
+            Adds.warning(f"El archivo {file_path} no fue encontrado.")
         return stats
 
     def getStatPerUser(file_path, username):
@@ -39,7 +42,7 @@ class Data:
                     if row[0] == username:
                         return (row[0], int(row[1]))
         except FileNotFoundError:
-            print(f"El archivo {file_path} no fue encontrado.")
+            Adds.warning(f"El archivo {file_path} no fue encontrado.")
         return None
 
     def addStats(file_path, username, score, difficulty):
@@ -56,7 +59,7 @@ class Data:
                 writer = csv.writer(file)
                 writer.writerow([username, score, difficulty])
         except FileNotFoundError:
-            print(f"El archivo {file_path} no fue encontrado.")
+            Adds.debug(f"El archivo {file_path} no fue encontrado.")
         Data.orderStats(file_path, "asc")
         Data.removeRedundancy(file_path)
 
@@ -75,7 +78,7 @@ class Data:
             # Ordena las estadísticas en orden ascendente según el puntaje
             stats.sort(key=lambda x: x[1])
         else:
-            print("El parámetro 'order' debe ser 'asc' o 'desc'.")
+            Adds.debug("El parámetro 'order' debe ser 'asc' o 'desc'.")
 
         try:
             with open(file_path, mode='w', newline='') as file:
@@ -85,7 +88,7 @@ class Data:
                 for stat in stats:
                     writer.writerow(stat)
         except FileNotFoundError:
-            print(f"El archivo {file_path} no fue encontrado.")
+            Adds.warning(f"El archivo {file_path} no fue encontrado.")
             
     def removeRedundancy(file_path):
         """
@@ -116,7 +119,7 @@ class Data:
                 for stat in unique_stats:
                     writer.writerow(stat)
         except FileNotFoundError:
-            print(f"El archivo {file_path} no fue encontrado.")
+            Adds.warnign(f"El archivo {file_path} no fue encontrado.")
             
 class DataTxt:
     def getStats(file_path):
@@ -137,9 +140,9 @@ class DataTxt:
                             # Intenta convertir el segundo elemento a entero
                             stats.append((parts[0], int(parts[1]), parts[2]))
                         except ValueError:
-                            print(f"Error al convertir a entero en la línea: {line}")
+                            Adds.warning(f"Error al convertir a entero en la línea: {line}")
                     else:
-                        print(f"La línea no tiene suficientes elementos: {line}")
+                        Adds.debug(f"La línea no tiene suficientes elementos: {line}")
         except FileNotFoundError:
             print(f"El archivo {file_path} no fue encontrado.")
         return stats
@@ -251,3 +254,9 @@ class Adds:
         list = ["JAJAJJAJAAJAJAJAJJAAJAJAJ.", "Capaz este no sea tu juego.", "Sos como adriel pero peor.", "Deberias comprarte unas manos.",
                 "Sos mas malo que patear una embarazada.", "Buscate otro juego.", "El que pierde es ga- PARAAA NI TERMINE."]
         return random.choice(list)
+    def debug(text)->None:
+        colorama_init()
+        print(f"{Fore.YELLOW}[DEBUG] {Fore.WHITE}{text}{Style.RESET_ALL}.")
+    def warning(text)->None:
+        colorama_init()
+        print(f"{Fore.RED}[WARNING] {Fore.WHITE}{text}{Style.RESET_ALL}.")
