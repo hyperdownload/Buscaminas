@@ -1,5 +1,6 @@
 import os
 import time 
+import json
 import random 
 import threading
 import traceback
@@ -52,6 +53,20 @@ class Minesweeper:
         >>> game = Game(root)
         # Inicializa el juego con la ventana principal 'root'.
         """
+        self.buttonColor = "#000000"
+        self.UIbuttonColor = "#000000"
+        self.buttonFgColor = "#FFFFFF"
+        self.flagButtonColor = "#FFA500"
+        self.pressedButtonColor = "#b4b4b4"
+        self.labelColor = "#000000"
+        self.labelFgColor = "#FFFFFF"
+        self.windowColor = "#000000"
+        self.windowFgColor = "#FFFFFF"
+        self.entryColor = "#000000"
+        self.entryFgColor = "#FFFFFF"
+        
+        self.loadSettings()
+        
         self.root = root 
         self.frame = Frame(self.root)  # Crea un nuevo marco en la ventana principal
         self.frame.pack()  # Empaqueta el marco para que se muestre en la ventana
@@ -75,10 +90,11 @@ class Minesweeper:
         self.file_menu.add_command(label="Nuevo Juego", command=self.resetGame)  # Agrega un comando para iniciar un nuevo juego
         self.file_menu.add_command(label="Stats", command=self.stats)  # Agrega un comando para mostrar las estadísticas
         self.file_menu.add_command(label="Opciones", command=self.options)  # Agrega un comando para abrir la ventana de opciones
+        self.file_menu.add_command(label="Personalizar objetos", command=self.personalization) # Agrega un comando para abrir una ventana para personalizar lo visual
         self.file_menu.add_command(label="Salir", command=self.root.quit)  # Agrega un comando para salir del juego
         self.navbar.add_cascade(label="Archivo", menu=self.file_menu)  # Agrega el menú a la barra de navegación
 
-        self.difficulty = {"Easy": 40, "Normal": 64, "Hard": 81, "ELDETONACULOS":150}  # Define los niveles de dificultad
+        self.difficulty = {"Easy": 40, "Normal": 64, "Hard": 81, "Imposible":150}  # Define los niveles de dificultad
         self.current_difficulty = self.difficulty["Easy"]  # Establece la dificultad actual como "Easy"
 
         self.buttonsList = []  # Crea una lista para almacenar los botones del juego
@@ -90,9 +106,11 @@ class Minesweeper:
 
         self.contadortime = Label(self.frame)  # Crea una etiqueta para mostrar el tiempo
         self.contadortime.grid(column=1, row=0, columnspan=4)  # Coloca la etiqueta en el marco
-        self.contadortime.config(text="Tiempo transcurrido: " + "00", font=("Arial 15"))
-        self.flags_counter = Label(self.frame, text="Banderas disponibles:" + str(self.flags), font=("Arial 15"))  # Crea una etiqueta para mostrar las banderas disponibles
+        self.contadortime.config(text="Tiempo transcurrido: " + "00", font=("Arial 15"), bg=self.labelColor, fg=self.labelFgColor)
+        self.flags_counter = Label(self.frame, text="Banderas disponibles:" + str(self.flags), font=("Arial 15"), bg=self.labelColor, fg=self.labelFgColor)  # Crea una etiqueta para mostrar las banderas disponibles
         self.flags_counter.grid(column=5, row=0, columnspan=4)  # Coloca la etiqueta en el marco
+        
+        self.root.config(bg=self.windowColor)
         
         #self.contadortime = Label(self.frame)  # Crea una etiqueta para mostrar el tiempo
         #self.contadortime.place(x=0, y=20)  # Coloca la etiqueta en el marco en las coordenadas (50, 20)
@@ -122,7 +140,226 @@ class Minesweeper:
         
         self.generateButtons()  # Genera los botones del juego
         self.bombsRandom()  # Coloca las bombas de manera aleatoria 
-    
+        
+    def loadSettings(self) -> None:
+        """
+        Carga la configuración de colores desde el archivo "config.json".
+
+        No recibe parámetros.
+
+        No retorna ningún valor.
+        """
+        try:
+            with open('config.json', 'r') as f:
+                # Abre el archivo "config.json" en modo lectura ('r').
+                # El objeto 'f' representa el archivo abierto.
+                data = json.load(f)
+                # Carga los datos del archivo JSON en un diccionario llamado 'data'.
+                # Si una clave no existe, se utiliza el valor por defecto (segundo argumento).
+                self.buttonColor = data.get('buttonColor', self.buttonColor)
+                self.UIbuttonColor = data.get('UIbuttonColor', self.UIbuttonColor)
+                self.buttonFgColor = data.get('buttonFgColor', self.buttonFgColor)
+                self.flagButtonColor = data.get('flagButtonColor', self.flagButtonColor)
+                self.pressedButtonColor = data.get('pressedButtonColor', self.pressedButtonColor)
+                self.labelColor = data.get('labelColor', self.labelColor)
+                self.labelFgColor = data.get('labelFgColor', self.labelFgColor)
+                self.windowColor = data.get('windowColor', self.windowColor)
+                self.windowFgColor = data.get('windowFgColor', self.windowFgColor)
+                self.entryColor = data.get('entryColor', self.entryColor)
+                self.entryFgColor = data.get('entryFgColor', self.entryFgColor)
+        except FileNotFoundError:
+            print("No se encontró el archivo config.json. Usando valores por defecto.")
+            # Imprime un mensaje si el archivo no existe.
+        except json.JSONDecodeError:
+            print("Error al decodificar JSON. Usando valores por defecto.")
+            # Imprime un mensaje si hay un error al decodificar el JSON.
+
+    def saveSettings(self)->None:
+        """
+        Guarda la configuración de colores en un archivo JSON llamado "config.json".
+
+        No recibe parámetros.
+
+        No retorna ningún valor.
+        """
+
+        # Obtener datos de los Entry
+        self.buttonColor = self.entryButtonColor.get()
+        self.UIbuttonColor = self.entryUIbuttonColor.get()
+        self.buttonFgColor = self.entryButtonBgColor.get()
+        self.flagButtonColor = self.entryFlagButtonColor.get()
+        self.pressedButtonColor = self.entryPressedButtonColor.get()
+        self.labelColor = self.entryLabelColor.get()
+        self.labelFgColor = self.entryLabelBgColor.get()
+        self.windowColor = self.entryWindowColor.get()
+        self.windowFgColor = self.entryWindowColor.get()
+        self.entryColor = self.entryEntryColor.get()
+        self.entryFgColor = self.entryEntryTxColor.get()
+
+        # Guardar datos en JSON
+        data = {
+            'buttonColor': self.buttonColor,
+            'UIbuttonColor': self.UIbuttonColor,
+            'buttonFgColor': self.buttonFgColor,
+            'flagButtonColor': self.flagButtonColor,
+            'pressedButtonColor': self.pressedButtonColor,
+            'labelColor': self.labelColor,
+            'labelFgColor': self.labelFgColor,
+            'windowColor': self.windowColor,
+            'windowFgColor': self.windowFgColor,
+            'entryColor': self.entryColor,
+            'entryFgColor': self.entryFgColor
+        }
+        with open('config.json', 'w') as f:
+            # Abre el archivo "config.json" en modo escritura ('w').
+            # El archivo se crea si no existe o se sobrescribe si ya existe.
+            # El objeto 'f' representa el archivo abierto.
+            json.dump(data, f, indent=4)
+            # Escribe los datos (diccionario 'data') en el archivo en formato JSON.
+            # El argumento 'indent=4' agrega sangría para una mejor legibilidad.
+        print("Configuración guardada correctamente.")
+        # Imprime un mensaje para indicar que la configuración se guardó con éxito.
+        self.resetGame()
+        # Llama al método 'resetGame()' para restablecer el estado del juego.
+
+    def personalization(self)->None:
+        """
+        Crea una ventana emergente para personalizar los colores de los botones y otros elementos de la interfaz.
+
+        Parámetros:
+            Ninguno.
+
+        Retorna:
+            None.
+        """
+        self.personalizationWindow = Toplevel(self.root)
+        self.personalizationWindow.title("Personalizar objetos")
+        self.personalizationWindow.geometry("400x650")
+        self.personalizationWindow.config(bg=self.windowColor)
+
+        # Sección de botones
+        buttonSectionLabel = Label(self.personalizationWindow, text="Botones", font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
+        buttonSectionLabel.grid(column=0, row=0, pady=10, padx=10, sticky=W)
+
+        buttonColorLabel = Label(self.personalizationWindow, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
+        buttonColorLabel.grid(column=0, row=1, padx=10, sticky=W)
+
+        self.entryButtonColor = Entry(self.personalizationWindow, bg=self.entryColor, fg=self.entryFgColor)
+        self.entryButtonColor.insert(0, self.buttonColor)
+        self.entryButtonColor.grid(column=1, row=1, padx=10)
+
+        buttonBgColorLabel = Label(self.personalizationWindow, text="Color de Texto:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
+        buttonBgColorLabel.grid(column=0, row=2, padx=10, sticky=W)
+
+        self.entryButtonBgColor = Entry(self.personalizationWindow, bg=self.entryColor, fg=self.entryFgColor)
+        self.entryButtonBgColor.insert(0, self.buttonFgColor)
+        self.entryButtonBgColor.grid(column=1, row=2, padx=10)
+
+        # UI Botones
+        UIbuttonSectionLabel = Label(self.personalizationWindow, text="Botones UI", font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
+        UIbuttonSectionLabel.grid(column=0, row=3, pady=10, padx=10, sticky=W)
+
+        UIbuttonColorLabel = Label(self.personalizationWindow, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
+        UIbuttonColorLabel.grid(column=0, row=4, padx=10, sticky=W)
+
+        self.entryUIbuttonColor = Entry(self.personalizationWindow, bg=self.entryColor, fg=self.entryFgColor)
+        self.entryUIbuttonColor.insert(0, self.UIbuttonColor)
+        self.entryUIbuttonColor.grid(column=1, row=4, padx=10)
+
+        UIbuttonBgColorLabel = Label(self.personalizationWindow, text="Color de Texto:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
+        UIbuttonBgColorLabel.grid(column=0, row=5, padx=10, sticky=W)
+
+        self.entryUIbuttonBgColor = Entry(self.personalizationWindow, bg=self.entryColor, fg=self.entryFgColor)
+        self.entryUIbuttonBgColor.insert(0, self.buttonFgColor)
+        self.entryUIbuttonBgColor.grid(column=1, row=5, padx=10)
+
+        # Más secciones y entradas
+        # Color de la bandera de botón
+        flagButtonSectionLabel = Label(self.personalizationWindow, text="Botón de Bandera", font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
+        flagButtonSectionLabel.grid(column=0, row=6, pady=10, padx=10, sticky=W)
+
+        flagButtonColorLabel = Label(self.personalizationWindow, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
+        flagButtonColorLabel.grid(column=0, row=7, padx=10, sticky=W)
+
+        self.entryFlagButtonColor = Entry(self.personalizationWindow, bg=self.entryColor, fg=self.entryFgColor)
+        self.entryFlagButtonColor.insert(0, self.flagButtonColor)
+        self.entryFlagButtonColor.grid(column=1, row=7, padx=10)
+
+        flagButtonBgColorLabel = Label(self.personalizationWindow, text="Color de Texto:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
+        flagButtonBgColorLabel.grid(column=0, row=8, padx=10, sticky=W)
+
+        self.entryFlagButtonBgColor = Entry(self.personalizationWindow, bg=self.entryColor, fg=self.entryFgColor)
+        self.entryFlagButtonBgColor.insert(0, self.buttonFgColor)
+        self.entryFlagButtonBgColor.grid(column=1, row=8, padx=10)
+
+        # Color del botón presionado
+        pressedButtonSectionLabel = Label(self.personalizationWindow, text="Botón Presionado", font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
+        pressedButtonSectionLabel.grid(column=0, row=9, pady=10, padx=10, sticky=W)
+
+        pressedButtonColorLabel = Label(self.personalizationWindow, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
+        pressedButtonColorLabel.grid(column=0, row=10, padx=10, sticky=W)
+
+        self.entryPressedButtonColor = Entry(self.personalizationWindow, bg=self.entryColor, fg=self.entryFgColor)
+        self.entryPressedButtonColor.insert(0, self.pressedButtonColor)
+        self.entryPressedButtonColor.grid(column=1, row=10, padx=10)
+
+        pressedButtonBgColorLabel = Label(self.personalizationWindow, text="Color de Texto:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
+        pressedButtonBgColorLabel.grid(column=0, row=11, padx=10, sticky=W)
+
+        self.entryPressedButtonBgColor = Entry(self.personalizationWindow, bg=self.entryColor, fg=self.entryFgColor)
+        self.entryPressedButtonBgColor.insert(0, self.buttonFgColor)
+        self.entryPressedButtonBgColor.grid(column=1, row=11, padx=10)
+
+        # Color de entry
+        entrySectionLabel = Label(self.personalizationWindow, text="Entry", font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
+        entrySectionLabel.grid(column=0, row=12, pady=10, padx=10, sticky=W)
+
+        entryColorLabel = Label(self.personalizationWindow, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
+        entryColorLabel.grid(column=0, row=13, padx=10, sticky=W)
+
+        self.entryEntryColor = Entry(self.personalizationWindow, bg=self.entryColor, fg=self.entryFgColor)
+        self.entryEntryColor.insert(0, self.entryColor)
+        self.entryEntryColor.grid(column=1, row=13, padx=10)
+
+        entryBgColorLabel = Label(self.personalizationWindow, text="Color de Texto:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
+        entryBgColorLabel.grid(column=0, row=14, padx=10, sticky=W)
+
+        self.entryEntryTxColor = Entry(self.personalizationWindow, bg=self.entryColor, fg=self.entryFgColor)
+        self.entryEntryTxColor.insert(0, self.entryFgColor)
+        self.entryEntryTxColor.grid(column=1, row=14, padx=10)
+        
+        #
+        labelSectionLabel = Label(self.personalizationWindow, text="Label", font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
+        labelSectionLabel.grid(column=0, row=15, pady=10, padx=10, sticky=W)
+
+        labelColorLabel = Label(self.personalizationWindow, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
+        labelColorLabel.grid(column=0, row=16, padx=10, sticky=W)
+
+        self.entryLabelColor = Entry(self.personalizationWindow, bg=self.entryColor, fg=self.entryFgColor)
+        self.entryLabelColor.insert(0, self.entryColor)
+        self.entryLabelColor.grid(column=1, row=16, padx=10)
+
+        labelBgColorLabel = Label(self.personalizationWindow, text="Color de Texto:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
+        labelBgColorLabel.grid(column=0, row=17, padx=10, sticky=W)
+
+        self.entryLabelBgColor = Entry(self.personalizationWindow, bg=self.entryColor, fg=self.entryFgColor)
+        self.entryLabelBgColor.insert(0, self.entryFgColor)
+        self.entryLabelBgColor.grid(column=1, row=17, padx=10)
+        
+        windowSectionLabel = Label(self.personalizationWindow, text="Ventana", font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
+        windowSectionLabel.grid(column=0, row=19, pady=10, padx=10, sticky=W)
+
+        windowColorLabel = Label(self.personalizationWindow, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
+        windowColorLabel.grid(column=0, row=20, padx=10, sticky=W)
+
+        self.entryWindowColor = Entry(self.personalizationWindow, bg=self.entryColor, fg=self.entryFgColor)
+        self.entryWindowColor.insert(0, self.windowColor)
+        self.entryWindowColor.grid(column=1, row=20, padx=10)
+
+        # Botón de guardar configuración
+        saveButton = Button(self.personalizationWindow, text="Guardar", command=self.saveSettings, font=("Arial", 10), bg=self.UIbuttonColor, fg=self.buttonFgColor)
+        saveButton.grid(column=1, row=21, pady=20)
+
     def difficultyToString(self, difficulty)->str:
         """
         Esta función convierte un valor de dificultad numérico en una cadena de texto.
@@ -131,7 +368,7 @@ class Minesweeper:
         difficulty (int): Un valor numérico que representa la dificultad. Este valor debe ser una clave en el diccionario self.difficulty.
 
         Retorna:
-        str: Una cadena de texto que representa la dificultad. Los posibles valores de retorno son "Easy", "Normal", "Hard", y "ELDETONACULOS".
+        str: Una cadena de texto que representa la dificultad. Los posibles valores de retorno son "Easy", "Normal", "Hard", y "Imposible".
 
         Ejemplo:
         >>> difficultyToString(self, self.difficulty["Easy"])
@@ -143,8 +380,8 @@ class Minesweeper:
             return "Normal"
         elif difficulty == self.difficulty["Hard"]:
             return "Hard"
-        elif difficulty == self.difficulty["ELDETONACULOS"]:
-            return "ELDETONACULOS"
+        elif difficulty == self.difficulty["Imposible"]:
+            return "Imposible"
         
     def stats(self)->None:
         """
@@ -159,16 +396,17 @@ class Minesweeper:
         """
         self.statsWindow = Toplevel(self.root)
         self.statsWindow.title("Estadísticas")
-        self.statsWindow.geometry("300x200")
+        self.statsWindow.geometry("300x300")
+        self.statsWindow.config(bg=self.windowColor)
         
         #Este codigo es para aplicar en csv
         #stats = Data.getStats(self.file_path)
         stats = DataTxt.getStats(self.file_path)
 
         for i, (username, score, dif) in enumerate(stats):
-            Label(self.statsWindow, text=f"Jugador:{username}").grid(row=i, column=0, padx=10, pady=5)
-            Label(self.statsWindow, text=f"Time:{score}s").grid(row=i, column=1, padx=10, pady=5)
-            Label(self.statsWindow, text=f"Dificultad:{dif}").grid(row=i, column=2, padx=10, pady=5)
+            Label(self.statsWindow, text=f"Jugador:{username}", bg=self.labelColor, fg=self.labelFgColor).grid(row=i, column=0, padx=10, pady=5)
+            Label(self.statsWindow, text=f"Time:{score}s", bg=self.labelColor, fg=self.labelFgColor).grid(row=i, column=1, padx=10, pady=5)
+            Label(self.statsWindow, text=f"Dificultad:{dif}", bg=self.labelColor, fg=self.labelFgColor).grid(row=i, column=2, padx=10, pady=5)
 
     
     def options(self) -> None:
@@ -182,9 +420,10 @@ class Minesweeper:
         """
         self.optionsWindow = Toplevel(self.root)
         self.optionsWindow.title("Opciones")
-        self.optionsWindow.geometry("300x250")
+        self.optionsWindow.geometry("350x250")
+        self.optionsWindow.config(bg=self.windowColor)
 
-        options = ["Easy", "Normal", "Hard", "ELDETONACULOS"]
+        options = ["Easy", "Normal", "Hard", "Imposible"]
 
         selectedOption = StringVar(self.optionsWindow)
         selectedOption.set(self.difficultyToString(self.current_difficulty))
@@ -193,26 +432,26 @@ class Minesweeper:
             self.current_difficulty = self.difficulty[opcion]
             self.resetGame()
 
-        self.entry = Entry(self.optionsWindow, width=30, textvariable=self.player)
+        self.entry = Entry(self.optionsWindow, width=30, textvariable=self.player, bg=self.entryColor, fg=self.entryFgColor)
         self.entry.grid(row=0, column=0, columnspan=2, padx=20, pady=20)
 
         def applyInput()->None:
             input_text = self.entry.get()
-            messagebox.showinfo("Options changed", "Los valores se ajustaron correctamente!")
+            messagebox.showinfo("Options changed", "Los valores se ajustaron correctamente.")
 
-        applyButton = Button(self.optionsWindow, text="Aplicar", command=applyInput)
+        applyButton = Button(self.optionsWindow, text="Aplicar", command=applyInput, bg=self.UIbuttonColor, fg=self.buttonFgColor)
         applyButton.grid(row=1, column=0, columnspan=2, pady=10)
 
-        difficultyLabel = Label(self.optionsWindow, text="Dificultad:", font=("Arial", 12))
-        difficultyLabel.grid(row=2, column=0, padx=10, pady=10, sticky=E)
+        difficultyLabel = Label(self.optionsWindow, text="Dificultad:", font=("Arial", 12), bg=self.labelColor, fg=self.labelFgColor)
+        difficultyLabel.grid(row=2, column=0, pady=10, sticky="W")
 
         option_menu = OptionMenu(self.optionsWindow, selectedOption, *options, command=seleccionar_opcion)
-        option_menu.grid(row=2, column=1, padx=10, pady=10, sticky=W)
+        option_menu.grid(row=2, column=1, pady=10,sticky="W")
         
         checkbox = ttk.Checkbutton(self.optionsWindow, text="Movimiento de ventana al perder", variable=self.isShakeWindowEnabled)
         checkbox.grid(row=3, column=0, padx=10, pady=10)
 
-        exitButton = Button(self.optionsWindow, text="Cerrar", command=self.optionsWindow.destroy)
+        exitButton = Button(self.optionsWindow, text="Cerrar", command=self.optionsWindow.destroy, bg=self.UIbuttonColor, fg=self.buttonFgColor)
         exitButton.grid(row=4, column=1, columnspan=2, pady=20)
 
     def time(self)->None:
@@ -249,7 +488,7 @@ class Minesweeper:
             fila_botones = []  # Crea una lista vacía para almacenar los botones de la fila
             for j in range(columnas):  # Para cada columna en la fila
                 # Crea un nuevo botón con las especificaciones dadas
-                btn = Button(self.frame, width=6, height=3, text="", font=("Arial 8 bold"), bg="grey")
+                btn = Button(self.frame, width=3, height=2, text="", font=("Arial 12 bold"), bg=self.buttonColor)
                 # Vincula un clic izquierdo del mouse al botón para llamar a la función 'slotPressed'
                 btn.bind('<Button-1>', lambda event, c=(i, j): self.slotPressed(c))
                 # Vincula un clic derecho del mouse al botón para llamar a la función 'placeFlag'
@@ -303,7 +542,7 @@ class Minesweeper:
             for j in range(len(self.buttonsList[i])):  # Para cada botón en la fila
                 button = self.buttonsList[i][j]  # Obtiene el botón
                 # Si el botón no tiene una bomba y no es gris (ha sido presionado)
-                if (i * len(self.buttonsList[i]) + j) not in self.bombs and button['bg'] != 'grey':
+                if (i * len(self.buttonsList[i]) + j) not in self.bombs and button['bg'] != self.buttonColor:
                     buttons_discovered += 1  # Incrementa el contador de botones descubiertos
 
         # Si el número de botones descubiertos es igual al número total de botones seguros
@@ -539,11 +778,11 @@ class Minesweeper:
             self.time()  # Actualiza el tiempo
         
         # Si el botón presionado está vacío y es gris (no ha sido presionado ni marcado con una bandera)
-        if self.buttonsList[fila][columna]['text'] == '' and self.buttonsList[fila][columna]['bg'] == 'grey':
-            bombas_cercanas = self.countNearbyBombs(index)  # Cuenta el número de bombas cercanas
+        if self.buttonsList[fila][columna]['text'] == '' and self.buttonsList[fila][columna]['bg'] == self.buttonColor:
+            nearbyBombs = self.countNearbyBombs(index)  # Cuenta el número de bombas cercanas
             # Actualiza el texto y el color del botón en función del número de bombas cercanas
-            self.buttonsList[fila][columna].config(bg='SystemButtonFace', text=str(bombas_cercanas) if bombas_cercanas > 0 else '', fg=self.coloration(bombas_cercanas))
-            if bombas_cercanas == 0:  # Si no hay bombas cercanas
+            self.buttonsList[fila][columna].config(bg=self.pressedButtonColor, text=str(nearbyBombs) if nearbyBombs > 0 else '', fg=self.coloration(nearbyBombs))
+            if nearbyBombs == 0:  # Si no hay bombas cercanas
                 for dy in (-1, 0, 1):  # Para cada desplazamiento en las filas
                     for dx in (-1, 0, 1):  # Para cada desplazamiento en las columnas
                         if dx == 0 and dy == 0:  # Si el desplazamiento es 0 en ambas direcciones (es decir, la casilla misma)
@@ -553,7 +792,7 @@ class Minesweeper:
                         if 0 <= nx < columnas and 0 <= ny < filas:
                             adj_index = (ny, nx)  # Obtiene el índice de la casilla vecina
                             # Si la casilla vecina no contiene una bomba y está vacía y es gris
-                            if adj_index not in self.bombs and self.buttonsList[ny][nx]['text'] == '' and self.buttonsList[ny][nx]['bg'] == 'grey':
+                            if adj_index not in self.bombs and self.buttonsList[ny][nx]['text'] == '' and self.buttonsList[ny][nx]['bg'] == self.buttonColor:
                                 self.slotPressed(adj_index)  # Presiona la casilla vecina
             self.checkWin()  # Verifica si el jugador ha ganado el juego
 
@@ -603,16 +842,16 @@ class Minesweeper:
         """
         fila, columna = index  # Obtiene las coordenadas del botón
         # Si el botón es gris (no ha sido presionado ni marcado con una bandera) y todavía quedan banderas disponibles
-        if self.buttonsList[fila][columna]['bg'] == 'grey' and self.flags > 0:
+        if self.buttonsList[fila][columna]['bg'] == self.buttonColor and self.flags > 0:
             # Coloca una bandera en el botón
-            self.buttonsList[fila][columna].config(bg='orange', image=self.flag)
+            self.buttonsList[fila][columna].config(bg=self.flagButtonColor, image=self.flag)
             self.buttonsList[fila][columna]["state"] = tk.DISABLED # Desactiva el botón
             self.flags -= 1  # Disminuye el número de banderas disponibles
             self.updateFlagsCounter()  # Actualiza el contador de banderas
         # Si el botón es naranja (tiene una bandera)
-        elif self.buttonsList[fila][columna]['bg'] == 'orange':
+        elif self.buttonsList[fila][columna]['bg'] == self.flagButtonColor:
             # Quita la bandera del botón
-            self.buttonsList[fila][columna].config(bg='grey', image=self.transparent_image)
+            self.buttonsList[fila][columna].config(bg=self.buttonColor, image=self.transparent_image)
             self.buttonsList[fila][columna]["state"] = tk.NORMAL # Vuelve a activar el boton
             self.flags += 1  # Aumenta el número de banderas disponibles
             self.updateFlagsCounter()  # Actualiza el contador de banderas
