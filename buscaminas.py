@@ -8,14 +8,17 @@ import tkinter as tk
 import importlib.util
 from tkinter import *  
 from tkinter import ttk
-from data import Data, DataTxt, Adds
+from PIL import Image, ImageTk
 from tkinter import messagebox 
-try:
-    from PIL import Image, ImageTk
-except:
-    print("Descargando pillow...")
-    os.system("pip install pillow")
-    from PIL import Image, ImageTk
+from data import Data, DataTxt, Adds
+
+Adds.debug(os.path.abspath(__file__))
+
+# Cambia al directorio donde se encuentra el archivo
+scriptDir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(scriptDir)
+Adds.debug(f"Directorio cambiado a:{scriptDir}")
+
 class ModManager:
     def __init__(self, mod_directory="mods")->None:
         try:
@@ -78,6 +81,9 @@ class Minesweeper:
         self.frameColor = "#000000"
         
         self.loadSettings() # Carga a las variables de personalizacion sus datos
+        
+        self.cacheCoordinateX=[]
+        self.cacheCoordinateY=[]
         
         self.root = root 
         self.frame = Frame(self.root, bg=self.frameColor)  # Crea un nuevo marco en la ventana principal
@@ -147,7 +153,7 @@ class Minesweeper:
         #Opciones
         self.isShakeWindowEnabled = tk.BooleanVar()  # Crea una variable booleana para almacenar si la opción de agitar la ventana está habilitada
         self.isShakeWindowEnabled.set(True)  # Establece la opción de agitar la ventana en True
-        self.defaultNoInstaLoseAttemps = 2  # Establece el número predeterminado de intentos antes de perder instantáneamente
+        self.defaultNoInstaLoseAttemps = 1  # Establece el número predeterminado de intentos antes de perder instantáneamente
         
         self.currentAttemps = self.defaultNoInstaLoseAttemps  # Establece los intentos actuales en el número predeterminado de intentos
         
@@ -767,6 +773,9 @@ class Minesweeper:
                     # Si la casilla vecina contiene una bomba
                     if (ny * columnas + nx) in self.bombs:  
                         count += 1  # Incrementa el contador de bombas
+                        self.cacheCoordinateX.append(nx)
+                        self.cacheCoordinateY.append(ny)
+        Adds.debug(f"Bomb nearby:{count}")
         return count  # Retorna el número de bombas
 
     def coloration(self, num)->str:
@@ -792,6 +801,13 @@ class Minesweeper:
         blue = 0
 
         return f'#{red:02x}{green:02x}{blue:02x}'
+    
+    def gameManager(self, nearbyBombs)->None:
+        if nearbyBombs>0 and self.currentAttemps!=0:
+            for x in self.cacheCoordinateX:
+                for y in self.cacheCoordinateY:
+                    Adds.debug((x,y))
+                    self.reassignBomb(x,y)
     
     def slotPressed(self, index)->None:
         """
@@ -832,6 +848,7 @@ class Minesweeper:
         # Si el botón presionado está vacío y es gris (no ha sido presionado ni marcado con una bandera)
         if self.buttonsList[fila][columna]['text'] == '' and self.buttonsList[fila][columna]['bg'] == self.buttonColor:
             nearbyBombs = self.countNearbyBombs(index)  # Cuenta el número de bombas cercanas
+            self.gameManager(nearbyBombs)
             # Actualiza el texto y el color del botón en función del número de bombas cercanas
             self.buttonsList[fila][columna].config(bg=self.pressedButtonColor, text=str(nearbyBombs) if nearbyBombs > 0 else '', fg=self.coloration(nearbyBombs))
             if nearbyBombs == 0:  # Si no hay bombas cercanas
@@ -861,11 +878,14 @@ class Minesweeper:
         fila (int): La fila del botón donde se quitó la bomba.
         columna (int): La columna del botón donde se quitó la bomba.
         """
-        print("Reasigned")  # Imprime un mensaje para indicar que la bomba ha sido reasignada
+        Adds.debug("Reasigned bomb")  # Imprime un mensaje para indicar que la bomba ha sido reasignada
         filas, columnas = self.find_dimensions(self.current_difficulty)  # Calcula las dimensiones del tablero de juego
         bomb_index = fila * columnas + columna  # Calcula el índice de la bomba en el tablero de juego
-        self.bombs.remove(bomb_index)  # Elimina la bomba de la lista de bombas
-
+        Adds.debug(bomb_index)
+        try:
+            self.bombs.remove(bomb_index)  # Elimina la bomba de la lista de bombas
+        except Exception as e:
+            Adds.warning(f"Hubo un error:{e}")
         # Calcula los lugares disponibles en el tablero donde se puede colocar la bomba
         available_spots = set(range(self.current_difficulty)) - set(self.bombs) - {bomb_index}
         new_bomb = random.choice(list(available_spots))  # Selecciona un lugar al azar
@@ -912,6 +932,7 @@ class Minesweeper:
         self.flags_counter.config(text="Banderas disponibles: " + ("0" + str(self.flags) if self.flags < 10 else str(self.flags)))
 
     def resetGame(self)->None:
+        Adds.debug("Reiniciando juego...")
         self.timeHabilited = False
         self.currentAttemps = self.defaultNoInstaLoseAttemps
         self.contadortime.config(text="Tiempo transcurrido: " + "00", font=("Arial 15"))
@@ -927,6 +948,7 @@ class Minesweeper:
         self.bombsRandom()
         self.inicio = False
         self.updateFlagsCounter()
+        Adds.debug("Juego reiniciado!")
 
 def debugConsole()->None:
     while True:
@@ -952,6 +974,6 @@ if __name__ == "__main__" and os.path.isfile("img/coconut/coconut.jpeg"):
         # Si se captura un error no manejado en el nivel superior
         traceback_info = traceback.format_exc()
         Adds.debug(f"Error no manejado: {e}")
-        Adds.debug(f"Traceback:\n{traceback_info}")
+        Adds.warning(f"Traceback:\n{traceback_info}")
 else:
     messagebox.showerror("Error", "Hubo un error fatal debido a la falta de un archivo esencial para la ejecucion.") 
