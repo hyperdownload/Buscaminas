@@ -1,8 +1,17 @@
 import csv
 import random
-from colorama import init as colorama_init
-from colorama import Fore
-from colorama import Style
+try:
+    from colorama import init as colorama_init
+    from colorama import Fore
+    from colorama import Style
+except ModuleNotFoundError as e:
+    Adds.warning("Colorama no encontrado\n"
+                 "Descargando...")
+    os.system("pip install colorama")
+    Adds.debug("Colorama instalado!")
+    from colorama import init as colorama_init
+    from colorama import Fore
+    from colorama import Style
 
 class Data:
     def getStats(file_path):
@@ -268,3 +277,6 @@ class Adds:
         """
         colorama_init()
         print(f"{Fore.RED}[WARNING] {Fore.WHITE}{text}{Style.RESET_ALL}")
+    def critical(text)->None:
+        colorama_init()
+        print(f"{Fore.RED}[FATAL] {Fore.WHITE}{text}{Style.RESET_ALL}")

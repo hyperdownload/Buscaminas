@@ -8,9 +8,18 @@ import tkinter as tk
 import importlib.util
 from tkinter import *  
 from tkinter import ttk
-from PIL import Image, ImageTk
 from tkinter import messagebox 
 from data import Data, DataTxt, Adds
+try:
+    from PIL import Image, ImageTk
+except ModuleNotFoundError:
+    Adds.warning("Pillow no encontrado\n"
+                 "Descargando...")
+    os.system("pip install pillow")
+    Adds.debug("Pillow instalado!")
+    from PIL import Image, ImageTk
+finally:
+    Adds.critical("Hubo un error inesperado.")
 
 Adds.debug(os.path.abspath(__file__))
 
@@ -402,7 +411,7 @@ class Minesweeper:
         frameSectionLabel = Label(interior_frame, text="Frame", font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
         frameSectionLabel.grid(column=0, row=20, pady=10, padx=10, sticky=W)
         
-        frameColorLabel = Label(interior_frame, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
+        frameColorLabel = Label(interior_frame, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.frameColor)
         frameColorLabel.grid(column=0, row=21, padx=10, sticky=W)
         
         self.entryFrameColor = Entry(interior_frame, bg=self.entryColor, fg=self.entryFgColor)
@@ -913,7 +922,7 @@ class Minesweeper:
 
         """
         fila, columna = index  # Obtiene las coordenadas del botón
-        # Si el botón es gris (no ha sido presionado ni marcado con una bandera) y todavía quedan banderas disponibles
+        # Si el botón es de 'x' color (no ha sido presionado ni marcado con una bandera) y todavía quedan banderas disponibles
         if self.buttonsList[fila][columna]['bg'] == self.buttonColor and self.flags > 0:
             # Coloca una bandera en el botón
             self.buttonsList[fila][columna].config(bg=self.flagButtonColor, image=self.flag)
@@ -923,8 +932,9 @@ class Minesweeper:
         # Si el botón es naranja (tiene una bandera)
         elif self.buttonsList[fila][columna]['bg'] == self.flagButtonColor:
             # Quita la bandera del botón
-            self.buttonsList[fila][columna].config(bg=self.buttonColor, image=self.transparent_image)
+            self.buttonsList[fila][columna].config(bg=self.buttonColor, image=self.transparent_image, compound="center")
             self.buttonsList[fila][columna]["state"] = tk.NORMAL # Vuelve a activar el boton
+            
             self.flags += 1  # Aumenta el número de banderas disponibles
             self.updateFlagsCounter()  # Actualiza el contador de banderas
 
