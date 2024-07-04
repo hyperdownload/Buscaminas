@@ -1,0 +1,29 @@
+[
+    {
+        "username": "a",
+        "score": 2,
+        "difficulty": 40,
+        "bombsPressed": 5,
+        "winnedGames": 5,
+        "gameLosses": 4,
+        "flagsUsed": 10
+    },
+    {
+        "username": "Player2",
+        "score": 90,
+        "difficulty": "easy",
+        "bombsPressed": 1,
+        "winnedGames": 8,
+        "gameLosses": 1,
+        "flagsUsed": 5
+    },
+    {
+        "username": "Player3",
+        "score": 150,
+        "difficulty": "hard",
+        "bombsPressed": 5,
+        "winnedGames": 2,
+        "gameLosses": 5,
+        "flagsUsed": 15
+    }
+]

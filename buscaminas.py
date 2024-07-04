@@ -9,18 +9,18 @@ import importlib.util
 from tkinter import *  
 from tkinter import ttk
 from tkinter import messagebox 
-from data import Data, DataTxt, Adds
+from data import *
 try:
     from PIL import Image, ImageTk
-except ModuleNotFoundError:
+except ModuleNotFoundError as e:
     Adds.warning("Pillow no encontrado\n"
                  "Descargando...")
     os.system("pip install pillow")
     Adds.debug("Pillow instalado!")
     from PIL import Image, ImageTk
-finally:
-    Adds.critical("Hubo un error inesperado.")
+import customtkinter as ctk
 
+commandConsole=True
 Adds.debug(os.path.abspath(__file__))
 
 # Cambia al directorio donde se encuentra el archivo
@@ -95,32 +95,6 @@ class Minesweeper:
         self.cacheCoordinateY=[]
         
         self.root = root 
-        self.frame = Frame(self.root, bg=self.frameColor)  # Crea un nuevo marco en la ventana principal
-        self.frame.pack()  # Empaqueta el marco para que se muestre en la ventana
-        self.root.title("Siria Simulator")  # Establece el título de la ventana
-        self.root.iconbitmap("img/bomba.ico")  # Establece el ícono de la ventana
-        self.root.resizable(False, False)  # Hace que la ventana no sea redimensionable
-        self.frame.config(width=400, height=400)  # Configura el tamaño del marco
-        self.navbar = Menu(self.root)  # Crea una nueva barra de navegación
-        self.root.config(menu=self.navbar)  # Configura la barra de navegación de la ventana
-        self.transparent_image = PhotoImage(width=1, height=1)  # Crea una imagen transparente para usarla como imagen predeterminada en los botones
-        
-        # Mod Manager
-        Adds.debug("Cargando mods...")
-        self.mod_manager = ModManager()  # Crea un nuevo administrador de mods
-        self.mod_manager.apply_mods(self)  # Aplica los mods al juego
-        
-        self.player=tk.StringVar()  # Crea una variable de cadena para almacenar el nombre del jugador
-        self.player.set("Player")  # Establece el nombre del jugador por defecto como "Player"
-        #Actualmente existe stats.csv y stats.txt, funcionan en ambos pero debe de ser actualizado en el codigo de DataTxt a Data
-        self.file_path = 'stats.txt'  # Establece la ruta del archivo donde se almacenan las estadísticas
-        self.file_menu = Menu(self.navbar, tearoff=0)  # Crea un nuevo menú en la barra de navegación
-        self.file_menu.add_command(label="Nuevo Juego", command=self.resetGame)  # Agrega un comando para iniciar un nuevo juego
-        self.file_menu.add_command(label="Stats", command=self.stats)  # Agrega un comando para mostrar las estadísticas
-        self.file_menu.add_command(label="Opciones", command=self.options)  # Agrega un comando para abrir la ventana de opciones
-        self.file_menu.add_command(label="Personalizar objetos", command=self.personalization) # Agrega un comando para abrir una ventana para personalizar lo visual
-        self.file_menu.add_command(label="Salir", command=self.root.quit)  # Agrega un comando para salir del juego
-        self.navbar.add_cascade(label="Archivo", menu=self.file_menu)  # Agrega el menú a la barra de navegación
 
         self.difficulty = {"Easy": 40, "Normal": 64, "Hard": 81, "Imposible":150}  # Define los niveles de dificultad
         self.current_difficulty = self.difficulty["Easy"]  # Establece la dificultad actual como "Easy"
@@ -131,20 +105,22 @@ class Minesweeper:
         self.timeInicio = time.time()  # Almacena el tiempo de inicio del juego
         self.flags = 0  # Inicializa el contador de banderas en 0
         self.bombs = []  # Crea una lista para almacenar las bombas
-
-        self.contadortime = Label(self.frame)  # Crea una etiqueta para mostrar el tiempo
-        self.contadortime.grid(column=1, row=0, columnspan=4)  # Coloca la etiqueta en el marco
-        self.contadortime.config(text="Tiempo transcurrido: " + "00", font=("Arial 15"), bg=self.labelColor, fg=self.labelFgColor)
-        self.flags_counter = Label(self.frame, text="Banderas disponibles:" + str(self.flags), font=("Arial 15"), bg=self.labelColor, fg=self.labelFgColor)  # Crea una etiqueta para mostrar las banderas disponibles
-        self.flags_counter.grid(column=5, row=0, columnspan=4)  # Coloca la etiqueta en el marco
         
         self.root.config(bg=self.windowColor)
-        
-        #self.contadortime = Label(self.frame)  # Crea una etiqueta para mostrar el tiempo
-        #self.contadortime.place(x=0, y=20)  # Coloca la etiqueta en el marco en las coordenadas (50, 20)
 
-        #self.flags_counter = Label(self.frame, text="Banderas disponibles:" + str(self.flags), font=("Arial 15"))  # Crea una etiqueta para mostrar las banderas disponibles
-        #self.flags_counter.place(x=0, y=20)  # Coloca la etiqueta en el marco en las coordenadas (200, 20)
+        # Mod Manager
+        Adds.debug("Cargando mods...")
+        self.mod_manager = ModManager()  # Crea un nuevo administrador de mods
+        self.mod_manager.apply_mods(self)  # Aplica los mods al juego
+        
+        self.player=tk.StringVar()  # Crea una variable de cadena para almacenar el nombre del jugador
+        self.player.set("Player")  # Establece el nombre del jugador por defecto como "Player"
+        #Actualmente existe stats.csv y stats.txt, funcionan en ambos pero debe de ser actualizado en el codigo de DataStadistics a Data
+        
+        self.file_path = 'stats.json'  # Establece la ruta del archivo donde se almacenan las estadísticas
+        self.usersPath = 'users.json' #
+        
+        self.logged = False 
 
         self.timeHabilited = False  # Establece la variable de tiempo habilitado en False
         # Imagenes originales
@@ -166,9 +142,114 @@ class Minesweeper:
         
         self.currentAttemps = self.defaultNoInstaLoseAttemps  # Establece los intentos actuales en el número predeterminado de intentos
         
+        #Adds.debug(f"Fila dividida:{row/2}/Fila multiplicada *2:{row*2}")
+
+        self.contadortime = Label(self.root,anchor="w")  # Crea una etiqueta para mostrar el tiempo
+        #self.contadortime.grid(column=1, row=0, columnspan=int(row//2),sticky='nwse')  # Coloca la etiqueta en el marco
+        self.contadortime.pack(side=tk.TOP)
+        self.contadortime.config(text="Tiempo transcurrido: " + "00", font=("Arial 15"), bg=self.labelColor, fg=self.labelFgColor)
+        self.flags_counter = Label(self.root, text="Banderas disponibles:" + str(self.flags), font=("Arial 15"), bg=self.labelColor, fg=self.labelFgColor,anchor="w")  # Crea una etiqueta para mostrar las banderas disponibles
+        #self.flags_counter.grid(column=int(row//2)+1, row=0, columnspan=int(row//2),sticky='nwse')  # Coloca la etiqueta en el marco
+
+        self.flags_counter.pack(side=tk.TOP)
+        self.frame = Frame(self.root, bg=self.frameColor)  # Crea un nuevo marco en la ventana principal
+        self.frame.pack(side=tk.BOTTOM)  # Empaqueta el marco para que se muestre en la ventana
+        self.root.title("Siria Simulator")  # Establece el título de la ventana
+        self.root.iconbitmap("img/bomba.ico")  # Establece el ícono de la ventana
+        self.root.resizable(False, False)  # Hace que la ventana no sea redimensionable
+        self.frame.config(width=400, height=400)  # Configura el tamaño del marco
+        self.navbar = Menu(self.root)  # Crea una nueva barra de navegación
+        self.root.config(menu=self.navbar)  # Configura la barra de navegación de la ventana
+        self.transparent_image = PhotoImage(width=1, height=1)  # Crea una imagen transparente para usarla como imagen predeterminada en los botones
+        
+        self.file_menu = Menu(self.navbar, tearoff=0)  # Crea un nuevo menú en la barra de navegación
+        self.file_menu.add_command(label="Nuevo Juego", command=self.resetGame)  # Agrega un comando para iniciar un nuevo juego
+        self.file_menu.add_command(label="Stats", command=self.stats)  # Agrega un comando para mostrar las estadísticas
+        self.file_menu.add_command(label="Opciones", command=self.options)  # Agrega un comando para abrir la ventana de opciones
+        self.file_menu.add_command(label="Personalizar objetos", command=self.personalization) # Agrega un comando para abrir una ventana para personalizar lo visual
+        self.file_menu.add_command(label="Salir", command=self.root.quit)  # Agrega un comando para salir del juego
+        self.navbar.add_cascade(label="Archivo", menu=self.file_menu)  # Agrega el menú a la barra de navegación
+        
+        self.pressedBombs = 0
+        self.winnedGames = 0
+        self.losedGames = 0
+        self.flagsUsed = 0
+
         self.generateButtons()  # Genera los botones del juego
         self.bombsRandom()  # Coloca las bombas de manera aleatoria 
         
+    def loggin(self, user):
+        if self.logged:
+            data = DataStadistics.getStatPerUser("stats.json", user)
+            for dat in data:
+                Adds.debug(dat)
+        else:
+            self.loginWindow = ctk.CTkToplevel(self.root)
+            self.loginWindow.title("Registro / Inicio de sesión")
+            self.loginWindow.geometry("300x200")
+            self.loginWindow.configure(fg_color=self.windowColor)
+
+            def register():
+                username = username_entry.get()
+                password = password_entry.get()
+                if not username or not password:
+                    Adds.warning("Usuario y contraseña no pueden estar vacíos.")
+                    return
+                
+                users = {}
+                if os.path.exists("users.json"):
+                    with open("users.json", 'r') as file:
+                        try:
+                            users = json.load(file)
+                        except json.JSONDecodeError:
+                            Adds.warning("Error al decodificar el archivo users.json.")
+                
+                if username in users:
+                    Adds.warning("El usuario ya está registrado.")
+                else:
+                    users[username] = password
+                    with open("users.json", 'w') as file:
+                        json.dump(users, file, indent=4)
+                    Adds.debug(f"Usuario {username} registrado correctamente.")
+                    self.loginWindow.destroy()
+
+            def login():
+                username = username_entry.get()
+                password = password_entry.get()
+                if not username or not password:
+                    Adds.warning("Usuario y contraseña no pueden estar vacíos.")
+                    return
+                
+                users = {}
+                if os.path.exists("users.json"):
+                    with open("users.json", 'r') as file:
+                        try:
+                            users = json.load(file)
+                        except json.JSONDecodeError:
+                            Adds.warning("Error al decodificar el archivo users.json.")
+                
+                if username in users and users[username] == password:
+                    Adds.debug(f"Usuario {username} ha iniciado sesión correctamente.")
+                    self.logged = True
+                    self.loginWindow.destroy()
+                else:
+                    Adds.warning("Usuario o contraseña incorrectos.")
+
+            username_label = ctk.CTkLabel(self.loginWindow, text="Usuario:")
+            username_label.pack(pady=5)
+            username_entry = ctk.CTkEntry(self.loginWindow)
+            username_entry.pack(pady=5)
+
+            password_label = ctk.CTkLabel(self.loginWindow, text="Contraseña:")
+            password_label.pack(pady=5)
+            password_entry = ctk.CTkEntry(self.loginWindow, show="*")
+            password_entry.pack(pady=5)
+
+            register_button = ctk.CTkButton(self.loginWindow, text="Registrarse", command=register)
+            register_button.pack(pady=10)
+
+            login_button = ctk.CTkButton(self.loginWindow, text="Iniciar sesión", command=login)
+            login_button.pack(pady=10)
     def loadSettings(self) -> None:
         """
         Carga la configuración de colores desde el archivo "config.json".
@@ -411,11 +492,11 @@ class Minesweeper:
         frameSectionLabel = Label(interior_frame, text="Frame", font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
         frameSectionLabel.grid(column=0, row=20, pady=10, padx=10, sticky=W)
         
-        frameColorLabel = Label(interior_frame, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.frameColor)
+        frameColorLabel = Label(interior_frame, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
         frameColorLabel.grid(column=0, row=21, padx=10, sticky=W)
         
         self.entryFrameColor = Entry(interior_frame, bg=self.entryColor, fg=self.entryFgColor)
-        self.entryFrameColor.insert(0, self.labelFgColor)
+        self.entryFrameColor.insert(0, self.frameColor)
         self.entryFrameColor.grid(column=1, row=21, padx=10)
 
         # Botón de guardar configuración
@@ -449,31 +530,126 @@ class Minesweeper:
         elif difficulty == self.difficulty["Imposible"]:
             return "Imposible"
         
-    def stats(self)->None:
+    def stats(self) -> None:
         """
-        Esta función muestra una ventana con las estadísticas de los jugadores.
+        Esta función muestra una ventana con las estadísticas de los jugadores o una ventana de registro/inicio de sesión.
 
-        Crea una nueva ventana (Toplevel) en la que se muestran las estadísticas de los jugadores,
-        incluyendo el nombre del jugador, el tiempo y la dificultad.
+        Si el usuario está logueado, se muestra una nueva ventana (Toplevel) con las estadísticas de los jugadores,
+        incluyendo el nombre del jugador, el tiempo, y la dificultad. 
 
-        Las estadísticas se obtienen a través de la función getStats del módulo Data, que toma como 
-        parámetro la ruta del archivo donde se almacenan las estadísticas.
-
+        Si el usuario no está logueado, se muestra una ventana de registro/inicio de sesión.
         """
-        self.statsWindow = Toplevel(self.root)
-        self.statsWindow.title("Estadísticas")
-        self.statsWindow.geometry("300x300")
-        self.statsWindow.config(bg=self.windowColor)
-        
-        #Este codigo es para aplicar en csv
-        #stats = Data.getStats(self.file_path)
-        stats = DataTxt.getStats(self.file_path)
+        if self.logged:
+            self.statsWindow = ctk.CTkToplevel(self.root)
+            self.statsWindow.title("Estadísticas")
+            self.statsWindow.geometry("400x400")
+            self.statsWindow.configure(fg_color=self.windowColor)
 
-        for i, (username, score, dif) in enumerate(stats):
-            Label(self.statsWindow, text=f"Jugador:{username}", bg=self.labelColor, fg=self.labelFgColor).grid(row=i, column=0, padx=10, pady=5)
-            Label(self.statsWindow, text=f"Time:{score}s", bg=self.labelColor, fg=self.labelFgColor).grid(row=i, column=1, padx=10, pady=5)
-            Label(self.statsWindow, text=f"Dificultad:{dif}", bg=self.labelColor, fg=self.labelFgColor).grid(row=i, column=2, padx=10, pady=5)
+            stats = DataStadistics.getStatPerUser(self.file_path, self.player.get())
 
+            if not stats:
+                no_stats_label = ctk.CTkLabel(self.statsWindow, text="No se encontraron estadísticas para este usuario.")
+                no_stats_label.pack(pady=20)
+                return
+
+            for i, stat in enumerate(stats):
+                username_label = ctk.CTkLabel(self.statsWindow, text=f"Usuario: {stat['username']}", anchor="w", fg_color=self.labelColor, text_color=self.labelFgColor)
+                username_label.grid(row=i, column=0, padx=10, pady=5)
+
+                score_label = ctk.CTkLabel(self.statsWindow, text=f"Tiempo: {stat['score']}", anchor="w", fg_color=self.labelColor, text_color=self.labelFgColor)
+                score_label.grid(row=i, column=1, padx=10, pady=5)
+
+                difficulty_label = ctk.CTkLabel(self.statsWindow, text=f"Dificultad: {stat['difficulty']}", anchor="w", fg_color=self.labelColor, text_color=self.labelFgColor)
+                difficulty_label.grid(row=i, column=2, padx=10, pady=5)
+
+                bombs_pressed_label = ctk.CTkLabel(self.statsWindow, text=f"Bombas presionadas: {stat['bombsPressed']}", anchor="w", fg_color=self.labelColor, text_color=self.labelFgColor)
+                bombs_pressed_label.grid(row=i, column=3, padx=10, pady=5)
+                self.pressedBombs = stat['bombsPressed']
+
+                winned_games_label = ctk.CTkLabel(self.statsWindow, text=f"Juegos ganados: {stat['winnedGames']}", anchor="w", fg_color=self.labelColor, text_color=self.labelFgColor)
+                winned_games_label.grid(row=i, column=4, padx=10, pady=5)
+                self.winnedGames = stat['winnedGames']
+
+                game_losses_label = ctk.CTkLabel(self.statsWindow, text=f"Juegos perdidos: {stat['gameLosses']}", anchor="w", fg_color=self.labelColor, text_color=self.labelFgColor)
+                game_losses_label.grid(row=i, column=5, padx=10, pady=5)
+                self.losedGames = stat['gameLosses']
+
+                flags_used_label = ctk.CTkLabel(self.statsWindow, text=f"Banderas usadas: {stat['flagsUsed']}", anchor="w", fg_color=self.labelColor, text_color=self.labelFgColor)
+                flags_used_label.grid(row=i, column=6, padx=10, pady=5)
+                self.flagsUsed = stat['flagsUsed']
+            
+            a = RadialProgressbar(self.statsWindow, size=100)
+            a.grid(row=5, column=5)
+            a.set(50)
+        else:
+            self.loginWindow = ctk.CTkToplevel(self.root)
+            self.loginWindow.title("Registro / Inicio de sesión")
+            self.loginWindow.geometry("300x300")
+            self.loginWindow.configure(fg_color=self.windowColor)
+
+            def register():
+                username = username_entry.get()
+                password = password_entry.get()
+                if not username or not password:
+                    Adds.warning("Usuario y contraseña no pueden estar vacíos.")
+                    return
+                
+                users = {}
+                if os.path.exists("users.json"):
+                    with open("users.json", 'r') as file:
+                        try:
+                            users = json.load(file)
+                        except json.JSONDecodeError:
+                            Adds.warning("Error al decodificar el archivo users.json.")
+                
+                if username in users:
+                    Adds.warning("El usuario ya está registrado.")
+                else:
+                    users[username] = password
+                    with open("users.json", 'w') as file:
+                        json.dump(users, file, indent=4)
+                    Adds.debug(f"Usuario {username} registrado correctamente.")
+                    self.loginWindow.destroy()
+
+            def login():
+                username = username_entry.get()
+                password = password_entry.get()
+                if not username or not password:
+                    Adds.warning("Usuario y contraseña no pueden estar vacíos.")
+                    return
+                
+                users = {}
+                if os.path.exists("users.json"):
+                    with open("users.json", 'r') as file:
+                        try:
+                            users = json.load(file)
+                        except json.JSONDecodeError:
+                            Adds.warning("Error al decodificar el archivo users.json.")
+                
+                if username in users and users[username] == password:
+                    Adds.debug(f"Usuario {username} ha iniciado sesión correctamente.")
+                    self.logged = True
+                    self.player.set(username)  # Guardar el nombre de usuario del jugador actual
+                    self.loginWindow.destroy()
+                    self.stats()  # Recargar la ventana de estadísticas
+                else:
+                    Adds.warning("Usuario o contraseña incorrectos.")
+
+            username_label = ctk.CTkLabel(self.loginWindow, text="Usuario:", fg_color=self.labelColor, text_color=self.labelFgColor)
+            username_label.pack(pady=5)
+            username_entry = ctk.CTkEntry(self.loginWindow, fg_color=self.entryColor, text_color=self.entryFgColor)
+            username_entry.pack(pady=5)
+
+            password_label = ctk.CTkLabel(self.loginWindow, text="Contraseña:", fg_color=self.labelColor, text_color=self.labelFgColor)
+            password_label.pack(pady=5)
+            password_entry = ctk.CTkEntry(self.loginWindow, show="*", fg_color=self.entryColor, text_color=self.entryFgColor)
+            password_entry.pack(pady=5)
+
+            register_button = ctk.CTkButton(self.loginWindow, text="Registrarse", command=register, fg_color=self.UIbuttonColor, text_color=self.buttonFgColor)
+            register_button.pack(pady=10)
+
+            login_button = ctk.CTkButton(self.loginWindow, text="Iniciar sesión", command=login, fg_color=self.UIbuttonColor, text_color=self.buttonFgColor)
+            login_button.pack(pady=10)
     
     def options(self) -> None:
         """
@@ -555,7 +731,7 @@ class Minesweeper:
             fila_botones = []  # Crea una lista vacía para almacenar los botones de la fila
             for j in range(columnas):  # Para cada columna en la fila
                 # Crea un nuevo botón con las especificaciones dadas
-                btn = Button(self.frame, width=3, height=2, text="", font=("Arial 12 bold"), bg=self.buttonColor)
+                btn = Button(self.frame, width=4, height=2, text="", font=("Arial 12 bold"), bg=self.buttonColor)
                 # Vincula un clic izquierdo del mouse al botón para llamar a la función 'slotPressed'
                 btn.bind('<Button-1>', lambda event, c=(i, j): self.slotPressed(c))
                 # Vincula un clic derecho del mouse al botón para llamar a la función 'placeFlag'
@@ -614,11 +790,12 @@ class Minesweeper:
 
         # Si el número de botones descubiertos es igual al número total de botones seguros
         if buttons_discovered == total_safe_buttons:
+            self.winnedGames+=1
             self.timeHabilited = False  # Deshabilita el tiempo
             # Agrega las estadísticas del juego al archivo de estadísticas
             #Data.addStats(self.file_path,self.player.get(), self.time_actual, self.difficultyToString(self.current_difficulty))
             #El codigo de arriba es para guardar en csv
-            DataTxt.addStats(self.file_path,self.player.get(), self.time_actual, self.difficultyToString(self.current_difficulty))
+            #DataStadistics.addStats(self.file_path,self.player.get(), self.time_actual, self.difficultyToString(self.current_difficulty))
             messagebox.showinfo("Victory", "¡Has ganado el juego!")  # Muestra un mensaje de victoria
             self.resetGame()  # Reinicia el juego
 
@@ -674,6 +851,8 @@ class Minesweeper:
         if self.isShakeWindowEnabled.get():
             self.shakeWindow(explosionPower)  # Agita la ventana
         self.timeHabilited = False  # Deshabilita el tiempo
+        self.pressedBombs += 1
+        self.losedGames += 1
         messagebox.showinfo("Game Over", Adds.randomOverText())  # Muestra un mensaje de "Game Over"
         self.resetGame()  # Reinicia el juego
 
@@ -925,12 +1104,14 @@ class Minesweeper:
         # Si el botón es de 'x' color (no ha sido presionado ni marcado con una bandera) y todavía quedan banderas disponibles
         if self.buttonsList[fila][columna]['bg'] == self.buttonColor and self.flags > 0:
             # Coloca una bandera en el botón
+            self.flagsUsed+=1
             self.buttonsList[fila][columna].config(bg=self.flagButtonColor, image=self.flag)
             self.buttonsList[fila][columna]["state"] = tk.DISABLED # Desactiva el botón
             self.flags -= 1  # Disminuye el número de banderas disponibles
             self.updateFlagsCounter()  # Actualiza el contador de banderas
         # Si el botón es naranja (tiene una bandera)
         elif self.buttonsList[fila][columna]['bg'] == self.flagButtonColor:
+            self.flagsUsed-=1
             # Quita la bandera del botón
             self.buttonsList[fila][columna].config(bg=self.buttonColor, image=self.transparent_image, compound="center")
             self.buttonsList[fila][columna]["state"] = tk.NORMAL # Vuelve a activar el boton
@@ -941,7 +1122,11 @@ class Minesweeper:
     def updateFlagsCounter(self)->None:
         self.flags_counter.config(text="Banderas disponibles: " + ("0" + str(self.flags) if self.flags < 10 else str(self.flags)))
 
+    def saveStadistics(self)->None:
+        DataStadistics.addStats(self.file_path, self.player.get(), self.time_actual,self.current_difficulty,self.pressedBombs,self.winnedGames,self.losedGames,self.flagsUsed)
+
     def resetGame(self)->None:
+        self.saveStadistics()
         Adds.debug("Reiniciando juego...")
         self.timeHabilited = False
         self.currentAttemps = self.defaultNoInstaLoseAttemps
@@ -967,23 +1152,32 @@ def debugConsole()->None:
             if command == "AutoWin":
                 Adds.debug(f"Eliminando {len(app.bombs)-1} de la lista.")
                 for _ in range(len(app.bombs)-1):app.bombs.pop()
+            if command == "BombReveal":
+                Adds.debug(f"Marcando {len(app.bombs)-1} de la lista.")
+                filas, columnas = app.find_dimensions(app.current_difficulty)
+                for i in app.bombs:  # Para cada índice en la lista de índices
+                    fila, columna = divmod(i, columnas)  # Calcula la posición del botón correspondiente en el tablero
+                    # Si el botón no es naranja (no tiene una bandera)
+                    app.buttonsList[fila][columna].config(bg='red')                  
             else:
                 exec(command)
         except Exception as e:
             l = traceback.format_exc()
-            Adds.warning(f"Error al ejecutar el comando: {e} {l}")
+            Adds.warning(f"Error al ejecutar el comando: {e} \naranja"
+            f"{l}")
 
 if __name__ == "__main__" and os.path.isfile("img/coconut/coconut.jpeg"):
     try:
-        hilo_consola = threading.Thread(target=debugConsole, daemon=True)
-        hilo_consola.start()
+        if commandConsole:
+            hilo_consola = threading.Thread(target=debugConsole, daemon=True)
+            hilo_consola.start()
         root = Tk() 
         app = Minesweeper(root)  
         root.mainloop()  
     except Exception as e:
         # Si se captura un error no manejado en el nivel superior
         traceback_info = traceback.format_exc()
-        Adds.debug(f"Error no manejado: {e}")
-        Adds.warning(f"Traceback:\n{traceback_info}")
+        Adds.critical(f"Error no manejado: {e}")
+        Adds.critical(f"Traceback:\n{traceback_info}")
 else:
     messagebox.showerror("Error", "Hubo un error fatal debido a la falta de un archivo esencial para la ejecucion.") 
