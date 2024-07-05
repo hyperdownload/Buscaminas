@@ -346,26 +346,25 @@ class Minesweeper:
 
     def personalization(self) -> None:
         """
-        Crea una ventana emergente para personalizar los colores de los botones y otros elementos de la interfaz.
+        Crea un frame dentro de self.root para personalizar los colores de los botones y otros elementos de la interfaz.
         """
-        self.personalizationWindow = Toplevel(self.root)
-        self.personalizationWindow.title("Personalizar objetos")
-        self.personalizationWindow.geometry("400x650")
-        self.personalizationWindow.config(bg=self.windowColor)
+        # Crear un nuevo Frame dentro de self.root
+        self.personalizationFrame = Frame(self.root, bg=self.windowColor)
+        self.personalizationFrame.place(relwidth=1, relheight=1)
 
         # Crear un Canvas para contener todo el contenido
-        canvas = Canvas(self.personalizationWindow, bg=self.windowColor)
+        canvas = Canvas(self.personalizationFrame, bg=self.windowColor)
         canvas.pack(side=LEFT, fill=BOTH, expand=True)
 
-        # Añadir un Scrollbar
-        scrollbar = Scrollbar(self.personalizationWindow, orient=VERTICAL, command=canvas.yview)
+        # Añadir un Scrollbar al Canvas
+        scrollbar = Scrollbar(self.personalizationFrame, orient=VERTICAL, command=canvas.yview)
         scrollbar.pack(side=RIGHT, fill=Y)
 
-        # Configurar el Canvas para el Scrollbar
+        # Configurar el Canvas para que funcione con el Scrollbar
         canvas.configure(yscrollcommand=scrollbar.set)
         canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
 
-        # Frame interior dentro del Canvas
+        # Crear un Frame interior dentro del Canvas
         interior_frame = Frame(canvas, bg=self.windowColor)
         canvas.create_window((0, 0), window=interior_frame, anchor='nw')
 
@@ -577,10 +576,25 @@ class Minesweeper:
                 flags_used_label = ctk.CTkLabel(self.statsWindow, text=f"Banderas usadas: {stat['flagsUsed']}", anchor="w", fg_color=self.labelColor, text_color=self.labelFgColor)
                 flags_used_label.grid(row=i, column=6, padx=10, pady=5)
                 self.flagsUsed = stat['flagsUsed']
+            def update():
+                stats = DataStadistics.getStatPerUser(self.file_path, self.player.get())
+                for i, stat in enumerate(stats):
+                    username_label.configure(text=f"Usuario: {stat['username']}")
+                    score_label.configure(text=f"Tiempo: {stat['score']}")
+                    difficulty_label.configure(text=f"Dificultad: {stat['difficulty']}")
+                    bombs_pressed_label.configure(text=f"Bombas presionadas: {stat['bombsPressed']}")
+                    winned_games_label.configure(text=f"Juegos ganados: {stat['winnedGames']}")
+                    game_losses_label.configure(text=f"Juegos perdidos: {stat['gameLosses']}")
+                    flags_used_label.configure(text=f"Banderas usadas: {stat['flagsUsed']}")
+                winnedGraph.set((self.winnedGames / (self.losedGames + self.winnedGames)) * 100)
             
-            a = RadialProgressbar(self.statsWindow, size=100)
-            a.grid(row=5, column=5)
-            a.set(50)
+            winnedGraph = RadialProgressbar(self.statsWindow, size=75)
+            winnedGraph.grid(row=5, column=5)
+
+            winnedGraph.set((self.winnedGames / (self.losedGames + self.winnedGames)) * 100)
+            
+            self.update_button = ctk.CTkButton(self.statsWindow, text="Actualizar", command=update)
+            self.update_button.grid(row=len(stats), column=0, columnspan=7, pady=10)
         else:
             self.loginWindow = ctk.CTkToplevel(self.root)
             self.loginWindow.title("Registro / Inicio de sesión")
@@ -819,7 +833,7 @@ class Minesweeper:
         self.flags_counter.config(text="Banderas disponibles: " + ("0" + str(self.flags) if self.flags < 10 else str(self.flags)))
         self.updateFlagsCounter()  # Actualiza el contador de banderas
 
-    def revealBombas(self, index)->None:
+    def revealBombas(self, index, cheat=False)->None:
         """
         Esta función revela las bombas en el tablero del juego cuando se presiona un botón que contiene una bomba.
 
@@ -848,13 +862,14 @@ class Minesweeper:
                 self.buttonsList[fila][columna].config(bg='red', image=self.bomb)
                 explosionPower+=1  # Incrementa la potencia de la explosión
         # Si la opción de agitar la ventana está habilitada
-        if self.isShakeWindowEnabled.get():
-            self.shakeWindow(explosionPower)  # Agita la ventana
-        self.timeHabilited = False  # Deshabilita el tiempo
-        self.pressedBombs += 1
-        self.losedGames += 1
-        messagebox.showinfo("Game Over", Adds.randomOverText())  # Muestra un mensaje de "Game Over"
-        self.resetGame()  # Reinicia el juego
+        if not cheat:
+            if self.isShakeWindowEnabled.get():
+                self.shakeWindow(explosionPower)  # Agita la ventana
+            self.timeHabilited = False  # Deshabilita el tiempo
+            self.pressedBombs += 1
+            self.losedGames += 1
+            messagebox.showinfo("Game Over", Adds.randomOverText())  # Muestra un mensaje de "Game Over"
+            self.resetGame()  # Reinicia el juego
 
     def shakeWindow(self, intensity, duration=2000)->None:
         """
@@ -1123,6 +1138,7 @@ class Minesweeper:
         self.flags_counter.config(text="Banderas disponibles: " + ("0" + str(self.flags) if self.flags < 10 else str(self.flags)))
 
     def saveStadistics(self)->None:
+        Adds.debug((self.file_path, self.player.get(), self.time_actual,self.current_difficulty,self.pressedBombs,self.winnedGames,self.losedGames,self.flagsUsed))
         DataStadistics.addStats(self.file_path, self.player.get(), self.time_actual,self.current_difficulty,self.pressedBombs,self.winnedGames,self.losedGames,self.flagsUsed)
 
     def resetGame(self)->None:
@@ -1154,11 +1170,7 @@ def debugConsole()->None:
                 for _ in range(len(app.bombs)-1):app.bombs.pop()
             if command == "BombReveal":
                 Adds.debug(f"Marcando {len(app.bombs)-1} de la lista.")
-                filas, columnas = app.find_dimensions(app.current_difficulty)
-                for i in app.bombs:  # Para cada índice en la lista de índices
-                    fila, columna = divmod(i, columnas)  # Calcula la posición del botón correspondiente en el tablero
-                    # Si el botón no es naranja (no tiene una bandera)
-                    app.buttonsList[fila][columna].config(bg='red')                  
+                app.revealBombas(app.bombs, cheat=True)                
             else:
                 exec(command)
         except Exception as e:

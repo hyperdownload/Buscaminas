@@ -128,17 +128,25 @@ class DataStadistics:
         # Encuentra el puntaje más alto para cada jugador
         for stat in stats:
             player = stat['username']
-            score = stat['score']
             if player in player_scores:
-                if score < player_scores[player]['score']:
+                existing_stat = player_scores[player]
+                # Reemplaza si el nuevo puntaje es mejor
+                if stat['score'] < existing_stat['score']:
                     player_scores[player] = stat
+                else:
+                    # Actualiza solo los campos que no son de puntaje
+                    existing_stat.update({
+                        'bombsPressed': stat['bombsPressed'],
+                        'winnedGames': stat['winnedGames'],
+                        'gameLosses': stat['gameLosses'],
+                        'flagsUsed': stat['flagsUsed']
+                    })
             else:
                 player_scores[player] = stat
 
         unique_stats = list(player_scores.values())
 
         DataStadistics.saveStats(file_path, unique_stats)
-
 class Data:
     def getStats(file_path):
         """
