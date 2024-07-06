@@ -103,6 +103,7 @@ class Minesweeper:
         self.reset = False  # Establece la variable de reinicio en False
         self.inicio = False  # Establece la variable de inicio en False
         self.timeInicio = time.time()  # Almacena el tiempo de inicio del juego
+        self.time_actual = 0
         self.flags = 0  # Inicializa el contador de banderas en 0
         self.bombs = []  # Crea una lista para almacenar las bombas
         
