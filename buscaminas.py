@@ -344,6 +344,9 @@ class Minesweeper:
         else:
             pass
 
+    def clickAndDrag(self):
+        pass
+
     def personalization(self) -> None:
         """
         Crea un frame dentro de self.root para personalizar los colores de los botones y otros elementos de la interfaz.
@@ -550,31 +553,31 @@ class Minesweeper:
                 no_stats_label = ctk.CTkLabel(self.statsWindow, text="No se encontraron estadísticas para este usuario.")
                 no_stats_label.pack(pady=20)
                 return
-
+            
             for i, stat in enumerate(stats):
-                username_label = ctk.CTkLabel(self.statsWindow, text=f"Usuario: {stat['username']}", anchor="w", fg_color=self.labelColor, text_color=self.labelFgColor)
-                username_label.grid(row=i, column=0, padx=10, pady=5)
+                username_label = ctk.CTkLabel(self.statsWindow, text=f"Usuario: {stat['username']}", anchor="e", fg_color=self.labelColor, text_color=self.labelFgColor, justify=LEFT, width=12)
+                username_label.grid(row=0, column=0, pady=20)
 
-                score_label = ctk.CTkLabel(self.statsWindow, text=f"Tiempo: {stat['score']}", anchor="w", fg_color=self.labelColor, text_color=self.labelFgColor)
-                score_label.grid(row=i, column=1, padx=10, pady=5)
+                score_label = ctk.CTkLabel(self.statsWindow, text=f"Tiempo: {stat['score']}",anchor="e", fg_color=self.labelColor, text_color=self.labelFgColor, justify=LEFT, width=12)
+                score_label.grid(row=1, column=0, padx=10, pady=20)
 
-                difficulty_label = ctk.CTkLabel(self.statsWindow, text=f"Dificultad: {stat['difficulty']}", anchor="w", fg_color=self.labelColor, text_color=self.labelFgColor)
-                difficulty_label.grid(row=i, column=2, padx=10, pady=5)
+                difficulty_label = ctk.CTkLabel(self.statsWindow, text=f"Dificultad: {stat['difficulty']}",anchor="e", fg_color=self.labelColor, text_color=self.labelFgColor, justify=LEFT, width=12)
+                difficulty_label.grid(row=2, column=0, padx=10, pady=20)
 
-                bombs_pressed_label = ctk.CTkLabel(self.statsWindow, text=f"Bombas presionadas: {stat['bombsPressed']}", anchor="w", fg_color=self.labelColor, text_color=self.labelFgColor)
-                bombs_pressed_label.grid(row=i, column=3, padx=10, pady=5)
+                bombs_pressed_label = ctk.CTkLabel(self.statsWindow, text=f"Bombas presionadas: {stat['bombsPressed']}",anchor="e", fg_color=self.labelColor, text_color=self.labelFgColor, justify=LEFT, width=12)
+                bombs_pressed_label.grid(row=3, column=0, padx=10, pady=20)
                 self.pressedBombs = stat['bombsPressed']
 
-                winned_games_label = ctk.CTkLabel(self.statsWindow, text=f"Juegos ganados: {stat['winnedGames']}", anchor="w", fg_color=self.labelColor, text_color=self.labelFgColor)
-                winned_games_label.grid(row=i, column=4, padx=10, pady=5)
+                winned_games_label = ctk.CTkLabel(self.statsWindow, text=f"Juegos ganados: {stat['winnedGames']}",anchor="e", fg_color=self.labelColor, text_color=self.labelFgColor, justify=LEFT, width=12)
+                winned_games_label.grid(row=4, column=0, padx=10, pady=20)
                 self.winnedGames = stat['winnedGames']
 
-                game_losses_label = ctk.CTkLabel(self.statsWindow, text=f"Juegos perdidos: {stat['gameLosses']}", anchor="w", fg_color=self.labelColor, text_color=self.labelFgColor)
-                game_losses_label.grid(row=i, column=5, padx=10, pady=5)
+                game_losses_label = ctk.CTkLabel(self.statsWindow, text=f"Juegos perdidos: {stat['gameLosses']}",anchor="e", fg_color=self.labelColor, text_color=self.labelFgColor, justify=LEFT, width=12)
+                game_losses_label.grid(row=5, column=0, padx=10, pady=20)
                 self.losedGames = stat['gameLosses']
 
-                flags_used_label = ctk.CTkLabel(self.statsWindow, text=f"Banderas usadas: {stat['flagsUsed']}", anchor="w", fg_color=self.labelColor, text_color=self.labelFgColor)
-                flags_used_label.grid(row=i, column=6, padx=10, pady=5)
+                flags_used_label = ctk.CTkLabel(self.statsWindow, text=f"Banderas usadas: {stat['flagsUsed']}",anchor="e", fg_color=self.labelColor, text_color=self.labelFgColor, justify=LEFT, width=12)
+                flags_used_label.grid(row=6, column=0, padx=10, pady=20)
                 self.flagsUsed = stat['flagsUsed']
             def update():
                 stats = DataStadistics.getStatPerUser(self.file_path, self.player.get())
@@ -588,17 +591,17 @@ class Minesweeper:
                     flags_used_label.configure(text=f"Banderas usadas: {stat['flagsUsed']}")
                 winnedGraph.set((self.winnedGames / (self.losedGames + self.winnedGames)) * 100)
             
-            winnedGraph = RadialProgressbar(self.statsWindow, size=75)
-            winnedGraph.grid(row=5, column=5)
+            winnedGraph = RadialProgressbar(self.statsWindow, size=75, font_size_ratio=0.2 )
+            winnedGraph.place(x = 300,y = 270)
 
             winnedGraph.set((self.winnedGames / (self.losedGames + self.winnedGames)) * 100)
-            
+
             self.update_button = ctk.CTkButton(self.statsWindow, text="Actualizar", command=update)
-            self.update_button.grid(row=len(stats), column=0, columnspan=7, pady=10)
+            self.update_button.grid(row=7, column=0, columnspan=7, pady=10)
         else:
             self.loginWindow = ctk.CTkToplevel(self.root)
             self.loginWindow.title("Registro / Inicio de sesión")
-            self.loginWindow.geometry("300x300")
+            self.loginWindow.geometry("300x300+550+100")
             self.loginWindow.configure(fg_color=self.windowColor)
 
             def register():

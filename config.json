@@ -5,10 +5,10 @@
     "flagButtonColor": "#FFA500",
     "pressedButtonColor": "#120c0a",
     "labelColor": "#000000",
-    "labelFgColor": "gold",
+    "labelFgColor": "white",
     "windowColor": "#000000",
     "windowFgColor": "#000000",
     "entryColor": "#1d1412",
     "entryFgColor": "#FFFFFF",
-    "frameColor": "gold"
+    "frameColor": "white"
 }
