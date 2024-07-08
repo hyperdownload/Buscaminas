@@ -238,6 +238,7 @@ class Minesweeper:
 
             username_label = ctk.CTkLabel(self.loginWindow, text="Usuario:")
             username_label.pack(pady=5)
+
             username_entry = ctk.CTkEntry(self.loginWindow)
             username_entry.pack(pady=5)
 
@@ -286,7 +287,7 @@ class Minesweeper:
             Adds.warning("Error al decodificar JSON. Usando valores por defecto.")
             # Imprime un mensaje si hay un error al decodificar el JSON.
 
-    def saveSettings(self)->None:
+    def saveSettings(self) -> None:
         """
         Guarda la configuración de colores en un archivo JSON llamado "config.json".
 
@@ -294,220 +295,136 @@ class Minesweeper:
 
         No retorna ningún valor.
         """
-        result = messagebox.askyesno("Confirmar", "Para aplicar los cambios se reiniciara la aplicacion.")
+        result = messagebox.askyesno("Confirmar", "Para aplicar los cambios se reiniciará la aplicación.")
         if result:
-            Adds.debug("Guardando configuracion")
+            Adds.debug("Guardando configuración")
 
-            # Obtener datos de los Entry
-            self.buttonColor = self.entryButtonColor.get()
-            self.UIbuttonColor = self.entryUIbuttonColor.get()
-            self.buttonFgColor = self.entryButtonBgColor.get()
-            self.flagButtonColor = self.entryFlagButtonColor.get()
-            self.pressedButtonColor = self.entryPressedButtonColor.get()
-            self.labelColor = self.entryLabelColor.get()
-            self.labelFgColor = self.entryLabelBgColor.get()
-            self.windowColor = self.entryWindowColor.get()
-            self.windowFgColor = self.entryWindowColor.get()
-            self.entryColor = self.entryEntryColor.get()
-            self.entryFgColor = self.entryEntryTxColor.get()
-            self.frameColor = self.entryFrameColor.get()
+            # Definir un diccionario con las entradas de color y sus atributos correspondientes
+            entries = {
+                'buttonColor': self.entryButtonColor,
+                'UIbuttonColor': self.entryUIbuttonColor,
+                'buttonFgColor': self.entryButtonBgColor,
+                'flagButtonColor': self.entryFlagButtonColor,
+                'pressedButtonColor': self.entryPressedButtonColor,
+                'labelColor': self.entryLabelColor,
+                'labelFgColor': self.entryLabelBgColor,
+                'windowColor': self.entryWindowColor,
+                'windowFgColor': self.entryWindowColor,
+                'entryColor': self.entryEntryColor,
+                'entryFgColor': self.entryEntryTxColor,
+                'frameColor': self.entryFrameColor,
+            }
+
+            # Obtener datos de los Entry y almacenarlos en un diccionario
+            data = {key: entry.get() for key, entry in entries.items()}
 
             # Guardar datos en JSON
-            data = {
-                'buttonColor': self.buttonColor,
-                'UIbuttonColor': self.UIbuttonColor,
-                'buttonFgColor': self.buttonFgColor,
-                'flagButtonColor': self.flagButtonColor,
-                'pressedButtonColor': self.pressedButtonColor,
-                'labelColor': self.labelColor,
-                'labelFgColor': self.labelFgColor,
-                'windowColor': self.windowColor,
-                'windowFgColor': self.windowFgColor,
-                'entryColor': self.entryColor,
-                'entryFgColor': self.entryFgColor,
-                'frameColor': self.frameColor,
-            }
             with open('config.json', 'w') as f:
                 Adds.debug("Escribiendo json...")
-                # Abre el archivo "config.json" en modo escritura ('w').
-                # El archivo se crea si no existe o se sobrescribe si ya existe.
-                # El objeto 'f' representa el archivo abierto.
                 json.dump(data, f, indent=4)
-                # Escribe los datos (diccionario 'data') en el archivo en formato JSON.
-                # El argumento 'indent=4' agrega sangría para una mejor legibilidad.
+            
             Adds.debug("Configuración guardada correctamente.")
             self.root.destroy()
+
             hilo_consola = threading.Thread(target=debugConsole, daemon=True)
             hilo_consola.start()
-            root = Tk() 
-            app = Minesweeper(root)  
-            root.mainloop() 
-        else:
-            pass
 
-    def clickAndDrag(self):
-        pass
+            root = Tk()
+            app = Minesweeper(root)
+            root.mainloop()
 
     def personalization(self) -> None:
         """
         Crea un frame dentro de self.root para personalizar los colores de los botones y otros elementos de la interfaz.
         """
-        # Crear un nuevo Frame dentro de self.root
         self.personalizationFrame = Frame(self.root, bg=self.windowColor)
         self.personalizationFrame.place(relwidth=1, relheight=1)
 
-        # Crear un Canvas para contener todo el contenido
         canvas = Canvas(self.personalizationFrame, bg=self.windowColor)
         canvas.pack(side=LEFT, fill=BOTH, expand=True)
 
-        # Añadir un Scrollbar al Canvas
         scrollbar = Scrollbar(self.personalizationFrame, orient=VERTICAL, command=canvas.yview)
         scrollbar.pack(side=RIGHT, fill=Y)
 
-        # Configurar el Canvas para que funcione con el Scrollbar
         canvas.configure(yscrollcommand=scrollbar.set)
         canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
 
-        # Crear un Frame interior dentro del Canvas
-        interior_frame = Frame(canvas, bg=self.windowColor)
-        canvas.create_window((0, 0), window=interior_frame, anchor='nw')
+        interiorFrame = Frame(canvas, bg=self.windowColor)
+        canvas.create_window((0, 0), window=interiorFrame, anchor='nw')
 
-        # Sección de botones
-        buttonSectionLabel = Label(interior_frame, text="Botones", font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
-        buttonSectionLabel.grid(column=0, row=0, pady=10, padx=10, sticky=W)
+        # Crear una lista de secciones y sus entradas correspondientes
+        sections = [
+            ("Botones", [
+                ("Color de Fondo:", "entryButtonColor", self.buttonColor),
+                ("Color de Texto:", "entryButtonBgColor", self.buttonFgColor),
+            ]),
+            ("Botones UI", [
+                ("Color de Fondo:", "entryUIbuttonColor", self.UIbuttonColor),
+                ("Color de Texto:", "entryUIbuttonBgColor", self.buttonFgColor),
+            ]),
+            ("Botón de Bandera", [
+                ("Color de Fondo:", "entryFlagButtonColor", self.flagButtonColor),
+                ("Color de Texto:", "entryFlagButtonBgColor", self.buttonFgColor),
+            ]),
+            ("Botón Presionado", [
+                ("Color de Fondo:", "entryPressedButtonColor", self.pressedButtonColor),
+                ("Color de Texto:", "entryPressedButtonBgColor", self.buttonFgColor),
+            ]),
+            ("Entry", [
+                ("Color de Fondo:", "entryEntryColor", self.entryColor),
+                ("Color de Texto:", "entryEntryTxColor", self.entryFgColor),
+            ]),
+            ("Label", [
+                ("Color de Fondo:", "entryLabelColor", self.labelColor),
+                ("Color de Texto:", "entryLabelBgColor", self.labelFgColor),
+            ]),
+            ("Ventana", [
+                ("Color de Fondo:", "entryWindowColor", self.windowColor),
+            ]),
+            ("Frame", [
+                ("Color de Fondo:", "entryFrameColor", self.frameColor),
+            ]),
+            """
+                Falta enchufar el codigo front con el back, para que este pueda realizar los cambios necesarios
+                en la interfaz visual.
+            """
+            ("CheckBox", [
+                ("Color de Fondo:", "entryFrameColor", self.frameColor),
+                ("Color de Fondo:", "entryFrameColor", self.frameColor),
+                ("Color de Fondo:", "entryFrameColor", self.frameColor),
+            ]),
+            ("CheckBox", [
+                ("Color de Fondo:", "entryFrameColor", self.frameColor),
+                ("Color de Fondo:", "entryFrameColor", self.frameColor),
+                ("Color de Fondo:", "entryFrameColor", self.frameColor),
+            ]),
+            ("ComboBox", [
+                ("Color de Fondo:", "entryFrameColor", self.frameColor),
+                ("Color de Fondo:", "entryFrameColor", self.frameColor),
+                ("Color de Fondo:", "entryFrameColor", self.frameColor),
+            ]),
+        ]
 
-        buttonColorLabel = Label(interior_frame, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
-        buttonColorLabel.grid(column=0, row=1, padx=10, sticky=W)
+        # Generar las etiquetas y entradas dinámicamente
+        row = 0
+        for sectionName, entries in sections:
+            section_label = Label(interiorFrame, text=sectionName, font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
+            section_label.grid(column=0, row=row, pady=10, padx=10, sticky=W)
+            row += 1
 
-        self.entryButtonColor = Entry(interior_frame, bg=self.entryColor, fg=self.entryFgColor)
-        self.entryButtonColor.insert(0, self.buttonColor)
-        self.entryButtonColor.grid(column=1, row=1, padx=10)
+            for labelText, attr_name, value in entries:
+                label = Label(interiorFrame, text=labelText, font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
+                label.grid(column=0, row=row, padx=10, sticky=W)
+                entry = Entry(interiorFrame, bg=self.entryColor, fg=self.entryFgColor)
+                entry.insert(0, value)
+                entry.grid(column=1, row=row, padx=10)
+                setattr(self, attr_name, entry)
+                row += 1
 
-        buttonBgColorLabel = Label(interior_frame, text="Color de Texto:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
-        buttonBgColorLabel.grid(column=0, row=2, padx=10, sticky=W)
+        save_button = Button(interiorFrame, text="Guardar", command=self.saveSettings, font=("Arial", 10), bg=self.UIbuttonColor, fg=self.buttonFgColor)
+        save_button.grid(column=1, row=row, pady=20)
 
-        self.entryButtonBgColor = Entry(interior_frame, bg=self.entryColor, fg=self.entryFgColor)
-        self.entryButtonBgColor.insert(0, self.buttonFgColor)
-        self.entryButtonBgColor.grid(column=1, row=2, padx=10)
-
-        # UI Botones
-        UIbuttonSectionLabel = Label(interior_frame, text="Botones UI", font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
-        UIbuttonSectionLabel.grid(column=0, row=3, pady=10, padx=10, sticky=W)
-
-        UIbuttonColorLabel = Label(interior_frame, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
-        UIbuttonColorLabel.grid(column=0, row=4, padx=10, sticky=W)
-
-        self.entryUIbuttonColor = Entry(interior_frame, bg=self.entryColor, fg=self.entryFgColor)
-        self.entryUIbuttonColor.insert(0, self.UIbuttonColor)
-        self.entryUIbuttonColor.grid(column=1, row=4, padx=10)
-
-        UIbuttonBgColorLabel = Label(interior_frame, text="Color de Texto:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
-        UIbuttonBgColorLabel.grid(column=0, row=5, padx=10, sticky=W)
-
-        self.entryUIbuttonBgColor = Entry(interior_frame, bg=self.entryColor, fg=self.entryFgColor)
-        self.entryUIbuttonBgColor.insert(0, self.buttonFgColor)
-        self.entryUIbuttonBgColor.grid(column=1, row=5, padx=10)
-
-        # Más secciones y entradas
-        # Color de la bandera de botón
-        flagButtonSectionLabel = Label(interior_frame, text="Botón de Bandera", font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
-        flagButtonSectionLabel.grid(column=0, row=6, pady=10, padx=10, sticky=W)
-
-        flagButtonColorLabel = Label(interior_frame, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
-        flagButtonColorLabel.grid(column=0, row=7, padx=10, sticky=W)
-
-        self.entryFlagButtonColor = Entry(interior_frame, bg=self.entryColor, fg=self.entryFgColor)
-        self.entryFlagButtonColor.insert(0, self.flagButtonColor)
-        self.entryFlagButtonColor.grid(column=1, row=7, padx=10)
-
-        flagButtonBgColorLabel = Label(interior_frame, text="Color de Texto:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
-        flagButtonBgColorLabel.grid(column=0, row=8, padx=10, sticky=W)
-
-        self.entryFlagButtonBgColor = Entry(interior_frame, bg=self.entryColor, fg=self.entryFgColor)
-        self.entryFlagButtonBgColor.insert(0, self.buttonFgColor)
-        self.entryFlagButtonBgColor.grid(column=1, row=8, padx=10)
-
-        # Color del botón presionado
-        pressedButtonSectionLabel = Label(interior_frame, text="Botón Presionado", font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
-        pressedButtonSectionLabel.grid(column=0, row=9, pady=10, padx=10, sticky=W)
-
-        pressedButtonColorLabel = Label(interior_frame, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
-        pressedButtonColorLabel.grid(column=0, row=10, padx=10, sticky=W)
-
-        self.entryPressedButtonColor = Entry(interior_frame, bg=self.entryColor, fg=self.entryFgColor)
-        self.entryPressedButtonColor.insert(0, self.pressedButtonColor)
-        self.entryPressedButtonColor.grid(column=1, row=10, padx=10)
-
-        pressedButtonBgColorLabel = Label(interior_frame, text="Color de Texto:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
-        pressedButtonBgColorLabel.grid(column=0, row=11, padx=10, sticky=W)
-
-        self.entryPressedButtonBgColor = Entry(interior_frame, bg=self.entryColor, fg=self.entryFgColor)
-        self.entryPressedButtonBgColor.insert(0, self.buttonFgColor)
-        self.entryPressedButtonBgColor.grid(column=1, row=11, padx=10)
-
-        # Color de entry
-        entrySectionLabel = Label(interior_frame, text="Entry", font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
-        entrySectionLabel.grid(column=0, row=12, pady=10, padx=10, sticky=W)
-
-        entryColorLabel = Label(interior_frame, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
-        entryColorLabel.grid(column=0, row=13, padx=10, sticky=W)
-
-        self.entryEntryColor = Entry(interior_frame, bg=self.entryColor, fg=self.entryFgColor)
-        self.entryEntryColor.insert(0, self.entryColor)
-        self.entryEntryColor.grid(column=1, row=13, padx=10)
-
-        entryBgColorLabel = Label(interior_frame, text="Color de Texto:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
-        entryBgColorLabel.grid(column=0, row=14, padx=10, sticky=W)
-
-        self.entryEntryTxColor = Entry(interior_frame, bg=self.entryColor, fg=self.entryFgColor)
-        self.entryEntryTxColor.insert(0, self.entryFgColor)
-        self.entryEntryTxColor.grid(column=1, row=14, padx=10)
-        
-        # Color de label
-        labelSectionLabel = Label(interior_frame, text="Label", font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
-        labelSectionLabel.grid(column=0, row=15, pady=10, padx=10, sticky=W)
-
-        labelColorLabel = Label(interior_frame, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
-        labelColorLabel.grid(column=0, row=16, padx=10, sticky=W)
-
-        self.entryLabelColor = Entry(interior_frame, bg=self.entryColor, fg=self.entryFgColor)
-        self.entryLabelColor.insert(0, self.labelColor)
-        self.entryLabelColor.grid(column=1, row=16, padx=10)
-
-        labelBgColorLabel = Label(interior_frame, text="Color de Texto:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
-        labelBgColorLabel.grid(column=0, row=17, padx=10, sticky=W)
-
-        self.entryLabelBgColor = Entry(interior_frame, bg=self.entryColor, fg=self.entryFgColor)
-        self.entryLabelBgColor.insert(0, self.labelFgColor)
-        self.entryLabelBgColor.grid(column=1, row=17, padx=10)
-        
-        # Color de ventana
-        windowSectionLabel = Label(interior_frame, text="Ventana", font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
-        windowSectionLabel.grid(column=0, row=18, pady=10, padx=10, sticky=W)
-
-        windowColorLabel = Label(interior_frame, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
-        windowColorLabel.grid(column=0, row=19, padx=10, sticky=W)
-
-        self.entryWindowColor = Entry(interior_frame, bg=self.entryColor, fg=self.entryFgColor)
-        self.entryWindowColor.insert(0, self.windowColor)
-        self.entryWindowColor.grid(column=1, row=19, padx=10)
-        
-        frameSectionLabel = Label(interior_frame, text="Frame", font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
-        frameSectionLabel.grid(column=0, row=20, pady=10, padx=10, sticky=W)
-        
-        frameColorLabel = Label(interior_frame, text="Color de Fondo:", font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
-        frameColorLabel.grid(column=0, row=21, padx=10, sticky=W)
-        
-        self.entryFrameColor = Entry(interior_frame, bg=self.entryColor, fg=self.entryFgColor)
-        self.entryFrameColor.insert(0, self.frameColor)
-        self.entryFrameColor.grid(column=1, row=21, padx=10)
-
-        # Botón de guardar configuración
-        saveButton = Button(interior_frame, text="Guardar", command=self.saveSettings, font=("Arial", 10), bg=self.UIbuttonColor, fg=self.buttonFgColor)
-        saveButton.grid(column=1, row=23, pady=20)
-
-        # Ajustar tamaño del Canvas al contenido
-        interior_frame.update_idletasks()
+        interiorFrame.update_idletasks()
         canvas.config(scrollregion=canvas.bbox("all"))
 
     def difficultyToString(self, difficulty)->str:
@@ -1165,22 +1082,31 @@ class Minesweeper:
         self.updateFlagsCounter()
         Adds.debug("Juego reiniciado!")
 
-def debugConsole()->None:
+def debugConsole() -> None:
+    commands = {
+        "AutoWin": lambda: autoWin(),
+        "BombReveal": lambda: bombReveal(),
+    }
+
+    def autoWin():
+        Adds.debug(f"Eliminando {len(app.bombs) - 1} de la lista.")
+        for _ in range(len(app.bombs) - 1):
+            app.bombs.pop()
+
+    def bombReveal():
+        Adds.debug(f"Marcando {len(app.bombs) - 1} de la lista.")
+        app.revealBombas(app.bombs, cheat=True)
+
     while True:
         command = input("Introduce un comando: ")
         try:
-            if command == "AutoWin":
-                Adds.debug(f"Eliminando {len(app.bombs)-1} de la lista.")
-                for _ in range(len(app.bombs)-1):app.bombs.pop()
-            if command == "BombReveal":
-                Adds.debug(f"Marcando {len(app.bombs)-1} de la lista.")
-                app.revealBombas(app.bombs, cheat=True)                
+            if command in commands:
+                commands[command]()
             else:
                 exec(command)
         except Exception as e:
             l = traceback.format_exc()
-            Adds.warning(f"Error al ejecutar el comando: {e} \naranja"
-            f"{l}")
+            Adds.warning(f"Error al ejecutar el comando: {e} \n{l}")
 
 if __name__ == "__main__" and os.path.isfile("img/coconut/coconut.jpeg"):
     try:
