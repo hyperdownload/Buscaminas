@@ -76,18 +76,22 @@ class Minesweeper:
         # Inicializa el juego con la ventana principal 'root'.
         """
         # Variables de personalizacion grafica
-        self.buttonColor = "#000000"
-        self.UIbuttonColor = "#000000"
-        self.buttonFgColor = "#FFFFFF"
-        self.flagButtonColor = "#FFA500"
-        self.pressedButtonColor = "#b4b4b4"
-        self.labelColor = "#000000"
-        self.labelFgColor = "#FFFFFF"
-        self.windowColor = "#000000"
-        self.windowFgColor = "#FFFFFF"
-        self.entryColor = "#000000"
-        self.entryFgColor = "#FFFFFF"
-        self.frameColor = "#000000"
+        self.settings = {
+            'buttonColor': '#000000',
+            'UIbuttonColor': '#000000',
+            'buttonFgColor': '#FFFFFF',
+            'flagButtonColor': '#FFA500',
+            'pressedButtonColor': '#b4b4b4',
+            'labelColor': '#000000',
+            'labelFgColor': '#FFFFFF',
+            'windowColor': '#000000',
+            'windowFgColor': '#FFFFFF',
+            'entryColor': '#000000',
+            'entryFgColor': '#FFFFFF',
+            'frameColor': '#000000',
+            'checkBoxColor': '#000000',
+            'checkBoxTextColor': '#000000',
+        }
         
         self.loadSettings() # Carga a las variables de personalizacion sus datos
         
@@ -179,113 +183,54 @@ class Minesweeper:
         self.generateButtons()  # Genera los botones del juego
         self.bombsRandom()  # Coloca las bombas de manera aleatoria 
         
-    def loggin(self, user):
-        if self.logged:
-            data = DataStadistics.getStatPerUser("stats.json", user)
-            for dat in data:
-                Adds.debug(dat)
-        else:
-            self.loginWindow = ctk.CTkToplevel(self.root)
-            self.loginWindow.title("Registro / Inicio de sesión")
-            self.loginWindow.geometry("300x200")
-            self.loginWindow.configure(fg_color=self.windowColor)
-
-            def register():
-                username = username_entry.get()
-                password = password_entry.get()
-                if not username or not password:
-                    Adds.warning("Usuario y contraseña no pueden estar vacíos.")
-                    return
-                
-                users = {}
-                if os.path.exists("users.json"):
-                    with open("users.json", 'r') as file:
-                        try:
-                            users = json.load(file)
-                        except json.JSONDecodeError:
-                            Adds.warning("Error al decodificar el archivo users.json.")
-                
-                if username in users:
-                    Adds.warning("El usuario ya está registrado.")
-                else:
-                    users[username] = password
-                    with open("users.json", 'w') as file:
-                        json.dump(users, file, indent=4)
-                    Adds.debug(f"Usuario {username} registrado correctamente.")
-                    self.loginWindow.destroy()
-
-            def login():
-                username = username_entry.get()
-                password = password_entry.get()
-                if not username or not password:
-                    Adds.warning("Usuario y contraseña no pueden estar vacíos.")
-                    return
-                
-                users = {}
-                if os.path.exists("users.json"):
-                    with open("users.json", 'r') as file:
-                        try:
-                            users = json.load(file)
-                        except json.JSONDecodeError:
-                            Adds.warning("Error al decodificar el archivo users.json.")
-                
-                if username in users and users[username] == password:
-                    Adds.debug(f"Usuario {username} ha iniciado sesión correctamente.")
-                    self.logged = True
-                    self.loginWindow.destroy()
-                else:
-                    Adds.warning("Usuario o contraseña incorrectos.")
-
-            username_label = ctk.CTkLabel(self.loginWindow, text="Usuario:")
-            username_label.pack(pady=5)
-
-            username_entry = ctk.CTkEntry(self.loginWindow)
-            username_entry.pack(pady=5)
-
-            password_label = ctk.CTkLabel(self.loginWindow, text="Contraseña:")
-            password_label.pack(pady=5)
-            password_entry = ctk.CTkEntry(self.loginWindow, show="*")
-            password_entry.pack(pady=5)
-
-            register_button = ctk.CTkButton(self.loginWindow, text="Registrarse", command=register)
-            register_button.pack(pady=10)
-
-            login_button = ctk.CTkButton(self.loginWindow, text="Iniciar sesión", command=login)
-            login_button.pack(pady=10)
     def loadSettings(self) -> None:
         """
         Carga la configuración de colores desde el archivo "config.json".
 
-        No recibe parámetros.
+        Este método intenta cargar la configuración de colores desde un archivo JSON llamado "config.json". 
+        Si el archivo no se encuentra o hay un error en el formato JSON, se usan valores por defecto 
+        que ya están definidos en el atributo `settings` de la clase.
 
-        No retorna ningún valor.
+        Proceso detallado:
+        1. Intenta abrir y leer el archivo "config.json".
+        2. Si el archivo se lee correctamente, actualiza el diccionario `settings` de la clase con los 
+        valores obtenidos del archivo JSON. Si alguna clave no está presente en el archivo, se 
+        mantiene el valor por defecto de `settings`.
+        3. Actualiza los atributos de la clase con los valores del diccionario `settings`.
+        4. Si el archivo "config.json" no se encuentra, se registra una advertencia y se usan los 
+        valores por defecto.
+        5. Si ocurre un error al decodificar el archivo JSON, se registra una advertencia y se usan los 
+        valores por defecto.
+
+        Excepciones:
+        - FileNotFoundError: Se lanza si el archivo "config.json" no se encuentra.
+        - json.JSONDecodeError: Se lanza si hay un error al decodificar el archivo JSON.
+
+        Adds:
+        - Se registra un mensaje de depuración al iniciar la carga de la configuración.
+        - Se registran advertencias si el archivo no se encuentra o si hay un error de decodificación.
+
+        Returns:
+        None
         """
         try:
-            Adds.debug("Cargando configuracion...")
+            Adds.debug("Cargando configuración...")
+
+            # Abre y lee el archivo 'config.json'
             with open('config.json', 'r') as f:
-                # Abre el archivo "config.json" en modo lectura ('r').
-                # El objeto 'f' representa el archivo abierto.
                 data = json.load(f)
-                # Carga los datos del archivo JSON en un diccionario llamado 'data'.
-                # Si una clave no existe, se utiliza el valor por defecto (segundo argumento).
-                self.buttonColor = data.get('buttonColor', self.buttonColor)
-                self.UIbuttonColor = data.get('UIbuttonColor', self.UIbuttonColor)
-                self.buttonFgColor = data.get('buttonFgColor', self.buttonFgColor)
-                self.flagButtonColor = data.get('flagButtonColor', self.flagButtonColor)
-                self.pressedButtonColor = data.get('pressedButtonColor', self.pressedButtonColor)
-                self.labelColor = data.get('labelColor', self.labelColor)
-                self.labelFgColor = data.get('labelFgColor', self.labelFgColor)
-                self.windowColor = data.get('windowColor', self.windowColor)
-                self.windowFgColor = data.get('windowFgColor', self.windowFgColor)
-                self.entryColor = data.get('entryColor', self.entryColor)
-                self.entryFgColor = data.get('entryFgColor', self.entryFgColor)
-                self.frameColor = data.get('frameColor', self.frameColor)
+                
+                # Actualiza el diccionario 'settings' con los valores del archivo JSON
+                self.settings.update({k: data.get(k, v) for k, v in self.settings.items()})
+
+            # Actualiza los atributos de la clase con los valores del diccionario 'settings'
+            for key, value in self.settings.items():
+                setattr(self, key, value)
+
         except FileNotFoundError:
             Adds.warning("No se encontró el archivo config.json. Usando valores por defecto.")
-            # Imprime un mensaje si el archivo no existe.
         except json.JSONDecodeError:
             Adds.warning("Error al decodificar JSON. Usando valores por defecto.")
-            # Imprime un mensaje si hay un error al decodificar el JSON.
 
     def saveSettings(self) -> None:
         """
@@ -313,6 +258,8 @@ class Minesweeper:
                 'entryColor': self.entryEntryColor,
                 'entryFgColor': self.entryEntryTxColor,
                 'frameColor': self.entryFrameColor,
+                'checkBoxColor': self.entryCheckBoxColor,
+                'checkBoxTextColor': self.entryCheckBoxTextColor,
             }
 
             # Obtener datos de los Entry y almacenarlos en un diccionario
@@ -384,24 +331,9 @@ class Minesweeper:
             ("Frame", [
                 ("Color de Fondo:", "entryFrameColor", self.frameColor),
             ]),
-            """
-                Falta enchufar el codigo front con el back, para que este pueda realizar los cambios necesarios
-                en la interfaz visual.
-            """
             ("CheckBox", [
-                ("Color de Fondo:", "entryFrameColor", self.frameColor),
-                ("Color de Fondo:", "entryFrameColor", self.frameColor),
-                ("Color de Fondo:", "entryFrameColor", self.frameColor),
-            ]),
-            ("CheckBox", [
-                ("Color de Fondo:", "entryFrameColor", self.frameColor),
-                ("Color de Fondo:", "entryFrameColor", self.frameColor),
-                ("Color de Fondo:", "entryFrameColor", self.frameColor),
-            ]),
-            ("ComboBox", [
-                ("Color de Fondo:", "entryFrameColor", self.frameColor),
-                ("Color de Fondo:", "entryFrameColor", self.frameColor),
-                ("Color de Fondo:", "entryFrameColor", self.frameColor),
+                ("Color de Fondo:", "entryCheckBoxColor", self.checkBoxColor),
+                ("Color de Texto:", "entryCheckBoxTextColor", self.checkBoxTextColor)
             ]),
         ]
 
@@ -626,7 +558,7 @@ class Minesweeper:
         option_menu = OptionMenu(self.optionsWindow, selectedOption, *options, command=seleccionar_opcion)
         option_menu.grid(row=2, column=1, pady=10,sticky="W")
         
-        checkbox = ttk.Checkbutton(self.optionsWindow, text="Movimiento de ventana al perder", variable=self.isShakeWindowEnabled)
+        checkbox = tk.Checkbutton(self.optionsWindow, text="Movimiento de ventana al perder", variable=self.isShakeWindowEnabled, fg=self.checkBoxTextColor, bg=self.checkBoxColor)
         checkbox.grid(row=3, column=0, padx=10, pady=10)
 
         exitButton = Button(self.optionsWindow, text="Cerrar", command=self.optionsWindow.destroy, bg=self.UIbuttonColor, fg=self.buttonFgColor)
@@ -727,10 +659,6 @@ class Minesweeper:
         if buttons_discovered == total_safe_buttons:
             self.winnedGames+=1
             self.timeHabilited = False  # Deshabilita el tiempo
-            # Agrega las estadísticas del juego al archivo de estadísticas
-            #Data.addStats(self.file_path,self.player.get(), self.time_actual, self.difficultyToString(self.current_difficulty))
-            #El codigo de arriba es para guardar en csv
-            #DataStadistics.addStats(self.file_path,self.player.get(), self.time_actual, self.difficultyToString(self.current_difficulty))
             messagebox.showinfo("Victory", "¡Has ganado el juego!")  # Muestra un mensaje de victoria
             self.resetGame()  # Reinicia el juego
 

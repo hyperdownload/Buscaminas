@@ -10,5 +10,7 @@
     "windowFgColor": "#000000",
     "entryColor": "#1d1412",
     "entryFgColor": "#FFFFFF",
-    "frameColor": "white"
+    "frameColor": "cyan",
+    "checkBoxColor": "#000000",
+    "checkBoxTextColor": "#FFFFFF"
 }

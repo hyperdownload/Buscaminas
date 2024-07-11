@@ -3,9 +3,9 @@
         "username": "Player",
         "score": 0,
         "difficulty": 40,
-        "bombsPressed": 0,
-        "winnedGames": 2,
-        "gameLosses": 0,
+        "bombsPressed": 2,
+        "winnedGames": 0,
+        "gameLosses": 2,
         "flagsUsed": 0
     },
     {
