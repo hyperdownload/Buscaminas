@@ -12,9 +12,9 @@
         "username": "a",
         "score": 0,
         "difficulty": 40,
-        "bombsPressed": 16,
+        "bombsPressed": 20,
         "winnedGames": 10,
-        "gameLosses": 16,
+        "gameLosses": 20,
         "flagsUsed": 4
     }
 ]

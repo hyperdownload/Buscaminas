@@ -80,6 +80,7 @@ class Minesweeper:
             'buttonColor': '#000000',
             'UIbuttonColor': '#000000',
             'buttonFgColor': '#FFFFFF',
+            'buttonHoverColor': '#FFFFFF',
             'flagButtonColor': '#FFA500',
             'pressedButtonColor': '#b4b4b4',
             'labelColor': '#000000',
@@ -169,11 +170,11 @@ class Minesweeper:
         
         self.file_menu = Menu(self.navbar, tearoff=0)  # Crea un nuevo menú en la barra de navegación
         self.file_menu.add_command(label="Nuevo Juego", command=self.resetGame)  # Agrega un comando para iniciar un nuevo juego
-        self.file_menu.add_command(label="Stats", command=self.stats)  # Agrega un comando para mostrar las estadísticas
+        self.file_menu.add_command(label="Estadisticas", command=self.stats)  # Agrega un comando para mostrar las estadísticas
         self.file_menu.add_command(label="Opciones", command=self.options)  # Agrega un comando para abrir la ventana de opciones
         self.file_menu.add_command(label="Personalizar objetos", command=self.personalization) # Agrega un comando para abrir una ventana para personalizar lo visual
         self.file_menu.add_command(label="Salir", command=self.root.quit)  # Agrega un comando para salir del juego
-        self.navbar.add_cascade(label="Archivo", menu=self.file_menu)  # Agrega el menú a la barra de navegación
+        self.navbar.add_cascade(label="Menu", menu=self.file_menu)  # Agrega el menú a la barra de navegación
         
         self.pressedBombs = 0
         self.winnedGames = 0
@@ -249,6 +250,7 @@ class Minesweeper:
                 'buttonColor': self.entryButtonColor,
                 'UIbuttonColor': self.entryUIbuttonColor,
                 'buttonFgColor': self.entryButtonBgColor,
+                'buttonHoverColor': self.entryUIbuttonHoverColor,
                 'flagButtonColor': self.entryFlagButtonColor,
                 'pressedButtonColor': self.entryPressedButtonColor,
                 'labelColor': self.entryLabelColor,
@@ -308,6 +310,7 @@ class Minesweeper:
             ("Botones UI", [
                 ("Color de Fondo:", "entryUIbuttonColor", self.UIbuttonColor),
                 ("Color de Texto:", "entryUIbuttonBgColor", self.buttonFgColor),
+                ("Color de Hover:", "entryUIbuttonHoverColor", self.buttonHoverColor),
             ]),
             ("Botón de Bandera", [
                 ("Color de Fondo:", "entryFlagButtonColor", self.flagButtonColor),
@@ -446,7 +449,7 @@ class Minesweeper:
 
             winnedGraph.set((self.winnedGames / (self.losedGames + self.winnedGames)) * 100)
 
-            self.update_button = ctk.CTkButton(self.statsWindow, text="Actualizar", command=update)
+            self.update_button = ctk.CTkButton(self.statsWindow, text="Actualizar", command=update, fg_color=self.UIbuttonColor, text_color=self.buttonFgColor, hover_color=self.buttonHoverColor)
             self.update_button.grid(row=7, column=0, columnspan=7, pady=10)
         else:
             self.loginWindow = ctk.CTkToplevel(self.root)
@@ -512,57 +515,47 @@ class Minesweeper:
             password_entry = ctk.CTkEntry(self.loginWindow, show="*", fg_color=self.entryColor, text_color=self.entryFgColor)
             password_entry.pack(pady=5)
 
-            register_button = ctk.CTkButton(self.loginWindow, text="Registrarse", command=register, fg_color=self.UIbuttonColor, text_color=self.buttonFgColor)
+            register_button = ctk.CTkButton(self.loginWindow, text="Registrarse", command=register, fg_color=self.UIbuttonColor, text_color=self.buttonFgColor, hover_color=self.buttonHoverColor)
             register_button.pack(pady=10)
 
-            login_button = ctk.CTkButton(self.loginWindow, text="Iniciar sesión", command=login, fg_color=self.UIbuttonColor, text_color=self.buttonFgColor)
+            login_button = ctk.CTkButton(self.loginWindow, text="Iniciar sesión", command=login, fg_color=self.UIbuttonColor, text_color=self.buttonFgColor, hover_color=self.buttonHoverColor)
             login_button.pack(pady=10)
     
     def options(self) -> None:
-        """
-        Esta función abre una ventana de opciones donde el usuario puede cambiar la dificultad del juego,
-        ingresar su nombre y habilitar o deshabilitar el movimiento de la ventana al perder.
-
-        La ventana de opciones incluye un menú desplegable para seleccionar la dificultad, un campo de entrada
-        para el nombre del jugador, un botón para aplicar los cambios, un checkbox para habilitar o deshabilitar
-        el movimiento de la ventana al perder y un botón para cerrar la ventana de opciones.
-        """
-        self.optionsWindow = Toplevel(self.root)
+        self.optionsWindow = ctk.CTkToplevel(self.root)
         self.optionsWindow.title("Opciones")
         self.optionsWindow.geometry("350x250")
-        self.optionsWindow.config(bg=self.windowColor)
+        self.optionsWindow.configure(fg_color=self.windowColor)
 
         options = ["Easy", "Normal", "Hard", "Imposible"]
-
         selectedOption = StringVar(self.optionsWindow)
         selectedOption.set(self.difficultyToString(self.current_difficulty))
 
-        def seleccionar_opcion(opcion)->None:
+        def seleccionar_opcion(opcion):
             self.current_difficulty = self.difficulty[opcion]
             self.resetGame()
 
-        self.entry = Entry(self.optionsWindow, width=30, textvariable=self.player, bg=self.entryColor, fg=self.entryFgColor)
+        self.entry = ctk.CTkEntry(self.optionsWindow, width=250, textvariable=self.player, fg_color=self.entryColor)
         self.entry.grid(row=0, column=0, columnspan=2, padx=20, pady=20)
 
-        def applyInput()->None:
+        def applyInput():
             input_text = self.entry.get()
-            Adds.debug("Opciones cambiadas")
             messagebox.showinfo("Options changed", "Los valores se ajustaron correctamente.")
 
-        applyButton = Button(self.optionsWindow, text="Aplicar", command=applyInput, bg=self.UIbuttonColor, fg=self.buttonFgColor)
-        applyButton.grid(row=1, column=0, columnspan=2, pady=10)
+        applyButton = ctk.CTkButton(self.optionsWindow, text="Aplicar", command=applyInput, fg_color=self.UIbuttonColor, hover_color=self.buttonHoverColor)
+        applyButton.place(x=35,y=210)
 
-        difficultyLabel = Label(self.optionsWindow, text="Dificultad:", font=("Arial", 12), bg=self.labelColor, fg=self.labelFgColor)
-        difficultyLabel.grid(row=2, column=0, pady=10, sticky="W")
+        difficultyLabel = ctk.CTkLabel(self.optionsWindow, text="Dificultad:", font=("Arial", 12))
+        difficultyLabel.grid(row=2, column=0, pady=10, sticky="W", padx=20)
 
-        option_menu = OptionMenu(self.optionsWindow, selectedOption, *options, command=seleccionar_opcion)
-        option_menu.grid(row=2, column=1, pady=10,sticky="W")
-        
-        checkbox = tk.Checkbutton(self.optionsWindow, text="Movimiento de ventana al perder", variable=self.isShakeWindowEnabled, fg=self.checkBoxTextColor, bg=self.checkBoxColor)
-        checkbox.grid(row=3, column=0, padx=10, pady=10)
+        option_menu = ctk.CTkOptionMenu(self.optionsWindow, variable=selectedOption, values=options, command=seleccionar_opcion)
+        option_menu.place(x=100, y=76)
 
-        exitButton = Button(self.optionsWindow, text="Cerrar", command=self.optionsWindow.destroy, bg=self.UIbuttonColor, fg=self.buttonFgColor)
-        exitButton.grid(row=4, column=1, columnspan=2, pady=20)
+        checkbox = ctk.CTkCheckBox(self.optionsWindow, text="Movimiento de ventana al perder", variable=self.isShakeWindowEnabled)
+        checkbox.place(x=20, y=140)
+
+        exitButton = ctk.CTkButton(self.optionsWindow, text="Cerrar", command=self.optionsWindow.destroy, fg_color=self.UIbuttonColor, hover_color=self.buttonHoverColor)
+        exitButton.place(x=185,y=210)
 
     def time(self)->None:
         """
@@ -824,10 +817,12 @@ class Minesweeper:
                 if 0 <= nx < columnas and 0 <= ny < filas: 
                     # Si la casilla vecina contiene una bomba
                     if (ny * columnas + nx) in self.bombs:  
+                        if self.currentAttemps!=0:
+                            print("a")
+                            self.reassignBomb(nx,ny)
                         count += 1  # Incrementa el contador de bombas
-                        self.cacheCoordinateX.append(nx)
-                        self.cacheCoordinateY.append(ny)
-        Adds.debug(f"Bomb nearby:{count}")
+                        
+        #Adds.debug(f"Bomb nearby:{count}")
         return count  # Retorna el número de bombas
 
     def coloration(self, num)->str:
@@ -853,13 +848,6 @@ class Minesweeper:
         blue = 0
 
         return f'#{red:02x}{green:02x}{blue:02x}'
-    
-    def gameManager(self, nearbyBombs)->None:
-        if nearbyBombs>0 and self.currentAttemps!=0:
-            for x in self.cacheCoordinateX:
-                for y in self.cacheCoordinateY:
-                    Adds.debug((x,y))
-                    self.reassignBomb(x,y)
     
     def slotPressed(self, index)->None:
         """
@@ -887,8 +875,10 @@ class Minesweeper:
         
         if self.currentAttemps!=0:  # Si el juego no ha comenzado
             self.currentAttemps -= 1  # Disminuye el número de intentos actuales
+            
             # Si el botón presionado contiene una bomba y la dificultad actual es "Easy" o "Normal"
             if fila * columnas + columna in self.bombs and self.current_difficulty in [self.difficulty["Easy"], self.difficulty["Normal"]]:
+                Adds.debug(fila * columnas + columna)
                 self.reassignBomb(fila, columna)  # Reasigna la bomba
             
         if not self.inicio:  # Si se han agotado los intentos
@@ -900,7 +890,7 @@ class Minesweeper:
         # Si el botón presionado está vacío y es gris (no ha sido presionado ni marcado con una bandera)
         if self.buttonsList[fila][columna]['text'] == '' and self.buttonsList[fila][columna]['bg'] == self.buttonColor:
             nearbyBombs = self.countNearbyBombs(index)  # Cuenta el número de bombas cercanas
-            self.gameManager(nearbyBombs)
+
             # Actualiza el texto y el color del botón en función del número de bombas cercanas
             self.buttonsList[fila][columna].config(bg=self.pressedButtonColor, text=str(nearbyBombs) if nearbyBombs > 0 else '', fg=self.coloration(nearbyBombs))
             if nearbyBombs == 0:  # Si no hay bombas cercanas
@@ -1014,6 +1004,7 @@ def debugConsole() -> None:
     commands = {
         "AutoWin": lambda: autoWin(),
         "BombReveal": lambda: bombReveal(),
+        "updateUI": lambda: updateAllWidgets(),
     }
 
     def autoWin():
@@ -1024,6 +1015,10 @@ def debugConsole() -> None:
     def bombReveal():
         Adds.debug(f"Marcando {len(app.bombs) - 1} de la lista.")
         app.revealBombas(app.bombs, cheat=True)
+        
+    def updateAllWidgets():
+        Adds.debug("Updating all widgets.")
+        app.root.update_idletasks()
 
     while True:
         command = input("Introduce un comando: ")
