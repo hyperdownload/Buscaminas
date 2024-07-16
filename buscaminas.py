@@ -8,7 +8,9 @@ import tkinter as tk
 import importlib.util
 from tkinter import *  
 from tkinter import ttk
+from CTkColorPicker import *
 from tkinter import messagebox 
+from tkinter import Tk, Frame, Canvas, Scrollbar, Label, Entry, Button, colorchooser, BOTH, LEFT, RIGHT, Y, W, VERTICAL
 from data import *
 try:
     from PIL import Image, ImageTk
@@ -113,11 +115,6 @@ class Minesweeper:
         self.bombs = []  # Crea una lista para almacenar las bombas
         
         self.root.config(bg=self.windowColor)
-
-        # Mod Manager
-        Adds.debug("Cargando mods...")
-        self.mod_manager = ModManager()  # Crea un nuevo administrador de mods
-        self.mod_manager.apply_mods(self)  # Aplica los mods al juego
         
         self.player=tk.StringVar()  # Crea una variable de cadena para almacenar el nombre del jugador
         self.player.set("Player")  # Establece el nombre del jugador por defecto como "Player"
@@ -183,6 +180,11 @@ class Minesweeper:
 
         self.generateButtons()  # Genera los botones del juego
         self.bombsRandom()  # Coloca las bombas de manera aleatoria 
+        
+        # Mod Manager
+        Adds.debug("Cargando mods...")
+        self.mod_manager = ModManager()  # Crea un nuevo administrador de mods
+        self.mod_manager.apply_mods(self)  # Aplica los mods al juego
         
     def loadSettings(self) -> None:
         """
@@ -284,21 +286,21 @@ class Minesweeper:
 
     def personalization(self) -> None:
         """
-        Crea un frame dentro de self.root para personalizar los colores de los botones y otros elementos de la interfaz.
+        Crea un frame dentro de self.root para personalizarsasasasas los colores de los botones y otros elementos de la interfaz.
         """
-        self.personalizationFrame = Frame(self.root, bg=self.windowColor)
+        self.personalizationFrame = ctk.CTkFrame(self.root, fg_color=self.windowColor)
         self.personalizationFrame.place(relwidth=1, relheight=1)
 
-        canvas = Canvas(self.personalizationFrame, bg=self.windowColor)
-        canvas.pack(side=LEFT, fill=BOTH, expand=True)
+        canvas = ctk.CTkCanvas(self.personalizationFrame, bg=self.windowColor)
+        canvas.pack(side=ctk.LEFT, fill=ctk.BOTH, expand=True)
 
-        scrollbar = Scrollbar(self.personalizationFrame, orient=VERTICAL, command=canvas.yview)
-        scrollbar.pack(side=RIGHT, fill=Y)
+        scrollbar = ctk.CTkScrollbar(self.personalizationFrame, orientation=ctk.VERTICAL, command=canvas.yview)
+        scrollbar.pack(side=ctk.RIGHT, fill=ctk.Y)
 
         canvas.configure(yscrollcommand=scrollbar.set)
         canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
 
-        interiorFrame = Frame(canvas, bg=self.windowColor)
+        interiorFrame = ctk.CTkFrame(canvas, fg_color=self.windowColor)
         canvas.create_window((0, 0), window=interiorFrame, anchor='nw')
 
         # Crear una lista de secciones y sus entradas correspondientes
@@ -340,28 +342,43 @@ class Minesweeper:
             ]),
         ]
 
-        # Generar las etiquetas y entradas dinámicamente
+        # Generar las etiquetas, entradas y botones dinámicamente
         row = 0
         for sectionName, entries in sections:
-            section_label = Label(interiorFrame, text=sectionName, font=("Arial", 12, "bold"), bg=self.labelColor, fg=self.labelFgColor)
-            section_label.grid(column=0, row=row, pady=10, padx=10, sticky=W)
+            section_label = ctk.CTkLabel(interiorFrame, text=sectionName, font=("Arial", 12, "bold"), text_color=self.labelFgColor)
+            section_label.grid(column=0, row=row, pady=10, padx=5, sticky=ctk.W)
             row += 1
 
             for labelText, attr_name, value in entries:
-                label = Label(interiorFrame, text=labelText, font=("Arial", 10), bg=self.labelColor, fg=self.labelFgColor)
-                label.grid(column=0, row=row, padx=10, sticky=W)
-                entry = Entry(interiorFrame, bg=self.entryColor, fg=self.entryFgColor)
+                label = ctk.CTkLabel(interiorFrame, text=labelText, font=("Arial", 10), text_color=self.labelFgColor)
+                label.grid(column=0, row=row, padx=5, pady=10, sticky=ctk.W)
+                entry = ctk.CTkEntry(interiorFrame, fg_color=self.entryColor, text_color=self.entryFgColor)
                 entry.insert(0, value)
-                entry.grid(column=1, row=row, padx=10)
+                entry.grid(column=1, row=row, padx=5, pady=10)
                 setattr(self, attr_name, entry)
+
+                # Botón para seleccionar color
+                color_button = ctk.CTkButton(interiorFrame, text="Elegir color", command=lambda e=entry: self.choose_color(e), fg_color=self.UIbuttonColor, text_color=self.buttonFgColor)
+                color_button.grid(column=2, row=row, padx=10, pady=10)
+
                 row += 1
 
-        save_button = Button(interiorFrame, text="Guardar", command=self.saveSettings, font=("Arial", 10), bg=self.UIbuttonColor, fg=self.buttonFgColor)
+        save_button = ctk.CTkButton(interiorFrame, text="Guardar", command=self.saveSettings, fg_color=self.UIbuttonColor, text_color=self.buttonFgColor)
         save_button.grid(column=1, row=row, pady=20)
 
         interiorFrame.update_idletasks()
         canvas.config(scrollregion=canvas.bbox("all"))
 
+    def choose_color(self, entry):
+        """
+        Abre el selector de color y establece el color seleccionado en la entrada correspondiente.
+        """
+        pick_color = AskColor() # open the color picker
+        color = pick_color.get() # get the color string
+        if color:
+            entry.delete(0, 'end')
+            entry.insert(0, color)
+            
     def difficultyToString(self, difficulty)->str:
         """
         Esta función convierte un valor de dificultad numérico en una cadena de texto.
@@ -410,12 +427,6 @@ class Minesweeper:
             for i, stat in enumerate(stats):
                 username_label = ctk.CTkLabel(self.statsWindow, text=f"Usuario: {stat['username']}", anchor="e", fg_color=self.labelColor, text_color=self.labelFgColor, justify=LEFT, width=12)
                 username_label.grid(row=0, column=0, pady=20)
-
-                score_label = ctk.CTkLabel(self.statsWindow, text=f"Tiempo: {stat['score']}",anchor="e", fg_color=self.labelColor, text_color=self.labelFgColor, justify=LEFT, width=12)
-                score_label.grid(row=1, column=0, padx=10, pady=20)
-
-                difficulty_label = ctk.CTkLabel(self.statsWindow, text=f"Dificultad: {stat['difficulty']}",anchor="e", fg_color=self.labelColor, text_color=self.labelFgColor, justify=LEFT, width=12)
-                difficulty_label.grid(row=2, column=0, padx=10, pady=20)
 
                 bombs_pressed_label = ctk.CTkLabel(self.statsWindow, text=f"Bombas presionadas: {stat['bombsPressed']}",anchor="e", fg_color=self.labelColor, text_color=self.labelFgColor, justify=LEFT, width=12)
                 bombs_pressed_label.grid(row=3, column=0, padx=10, pady=20)
@@ -977,8 +988,8 @@ class Minesweeper:
         self.flags_counter.config(text="Banderas disponibles: " + ("0" + str(self.flags) if self.flags < 10 else str(self.flags)))
 
     def saveStadistics(self)->None:
-        Adds.debug((self.file_path, self.player.get(), self.time_actual,self.current_difficulty,self.pressedBombs,self.winnedGames,self.losedGames,self.flagsUsed))
-        DataStadistics.addStats(self.file_path, self.player.get(), self.time_actual,self.current_difficulty,self.pressedBombs,self.winnedGames,self.losedGames,self.flagsUsed)
+        Adds.debug((self.file_path, self.player.get(), self.time_actual,self.difficultyToString(self.current_difficulty),self.pressedBombs,self.winnedGames,self.losedGames,self.flagsUsed))
+        DataStadistics.addStats(self.file_path, self.player.get(), self.time_actual,self.difficultyToString(self.current_difficulty),self.pressedBombs,self.winnedGames,self.losedGames,self.flagsUsed)
 
     def resetGame(self)->None:
         self.saveStadistics()
@@ -1005,6 +1016,7 @@ def debugConsole() -> None:
         "AutoWin": lambda: autoWin(),
         "BombReveal": lambda: bombReveal(),
         "updateUI": lambda: updateAllWidgets(),
+        "help": lambda: help(),
     }
 
     def autoWin():
@@ -1020,6 +1032,10 @@ def debugConsole() -> None:
         Adds.debug("Updating all widgets.")
         app.root.update_idletasks()
 
+    def help():
+        for command in commands:
+            Adds.debug(f"Comando:{command}")
+    
     while True:
         command = input("Introduce un comando: ")
         try:
