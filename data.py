@@ -147,6 +147,44 @@ class DataStadistics:
         unique_stats = list(player_scores.values())
 
         DataStadistics.saveStats(file_path, unique_stats)
+    
+    @staticmethod
+    def changeName(file_path, previousName, newName):
+        """
+        Cambia el nombre de un usuario existente en el archivo JSON.
+
+        :param file_path: Ruta del archivo JSON.
+        :param previousName: Nombre anterior del usuario.
+        :param newName: Nuevo nombre del usuario.
+        """
+        stats = DataStadistics.getStats(file_path)
+        user_found = False
+        
+        for stat in stats:
+            if stat['username'].lower() == previousName.lower():
+                stat['username'] = newName
+                user_found = True
+        
+        if user_found:
+            DataStadistics.saveStats(file_path, stats)
+        else:
+            Adds.warning(f"Usuario {previousName} no encontrado.")
+
+    @staticmethod
+    def removeUser(file_path, username):
+        """
+        Elimina un usuario específico del archivo JSON.
+
+        :param file_path: Ruta del archivo JSON.
+        :param username: Nombre de usuario a eliminar.
+        """
+        stats = DataStadistics.getStats(file_path)
+        new_stats = [stat for stat in stats if stat['username'].lower() != username.lower()]
+        
+        if len(new_stats) == len(stats):
+            Adds.warning(f"Usuario {username} no encontrado.")
+        else:
+            DataStadistics.saveStats(file_path, new_stats)
 class Data:
     def getStats(file_path):
         """
