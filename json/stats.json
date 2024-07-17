@@ -1,0 +1,20 @@
+[
+    {
+        "username": "Player",
+        "score": 0,
+        "difficulty": 40,
+        "bombsPressed": 0,
+        "winnedGames": 1,
+        "gameLosses": 0,
+        "flagsUsed": 0
+    },
+    {
+        "username": "a",
+        "score": 0,
+        "difficulty": 40,
+        "bombsPressed": 20,
+        "winnedGames": 11,
+        "gameLosses": 20,
+        "flagsUsed": 4
+    }
+]

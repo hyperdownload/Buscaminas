@@ -1,0 +1,17 @@
+{
+    "buttonColor": "#000000",
+    "UIbuttonColor": "#252525",
+    "buttonFgColor": "#FFFFFF",
+    "buttonHoverColor": "#FFFFFF",
+    "flagButtonColor": "#FFA500",
+    "pressedButtonColor": "#120c0a",
+    "labelColor": "#000000",
+    "labelFgColor": "white",
+    "windowColor": "#000000",
+    "windowFgColor": "#000000",
+    "entryColor": "#1d1412",
+    "entryFgColor": "#FFFFFF",
+    "frameColor": "cyan",
+    "checkBoxColor": "#000000",
+    "checkBoxTextColor": "red"
+}

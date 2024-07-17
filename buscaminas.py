@@ -1,17 +1,24 @@
 import os
 import time 
+import sys
 import json
 import random 
 import threading
 import traceback
 import tkinter as tk 
 import importlib.util
+from Messagebox import CTkMessagebox # Importa localmente desde un paquete
 from tkinter import *  
 from tkinter import ttk
-from CTkColorPicker import *
+from CTkColorPicker import * # Importa localmente desde un paquete
 from tkinter import messagebox 
 from tkinter import Tk, Frame, Canvas, Scrollbar, Label, Entry, Button, colorchooser, BOTH, LEFT, RIGHT, Y, W, VERTICAL
-from data import *
+package_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'tools'))
+if package_path not in sys.path:
+    sys.path.append(package_path)
+
+# Importar todos los módulos de 'data.py'
+from data import * # Importa localmente desde un paquete
 try:
     from PIL import Image, ImageTk
 except ModuleNotFoundError as e:
@@ -20,7 +27,14 @@ except ModuleNotFoundError as e:
     os.system("pip install pillow")
     Adds.debug("Pillow instalado!")
     from PIL import Image, ImageTk
-import customtkinter as ctk
+try:
+    import customtkinter as ctk
+except ModuleNotFoundError as e:
+    Adds.warning("CustomTkinter no encontrado\n"
+                 "Descargando...")
+    os.system("pip install customtkinter")
+    Adds.debug("CustomTkinter instalado!")
+    import customtkinter as ctk
 
 commandConsole=True
 Adds.debug(os.path.abspath(__file__))
@@ -95,7 +109,7 @@ class Minesweeper:
             'checkBoxColor': '#000000',
             'checkBoxTextColor': '#000000',
         }
-        
+        self.configPath = './json/config.json'
         self.loadSettings() # Carga a las variables de personalizacion sus datos
         
         self.cacheCoordinateX=[]
@@ -120,8 +134,9 @@ class Minesweeper:
         self.player.set("Player")  # Establece el nombre del jugador por defecto como "Player"
         #Actualmente existe stats.csv y stats.txt, funcionan en ambos pero debe de ser actualizado en el codigo de DataStadistics a Data
         
-        self.file_path = 'stats.json'  # Establece la ruta del archivo donde se almacenan las estadísticas
-        self.usersPath = 'users.json' #
+        self.file_path = './json/stats.json'  # Establece la ruta del archivo donde se almacenan las estadísticas
+        self.usersPath = './json/users.json' #
+        
         
         self.logged = False 
 
@@ -220,7 +235,7 @@ class Minesweeper:
             Adds.debug("Cargando configuración...")
 
             # Abre y lee el archivo 'config.json'
-            with open('config.json', 'r') as f:
+            with open(self.configPath, 'r') as f:
                 data = json.load(f)
                 
                 # Actualiza el diccionario 'settings' con los valores del archivo JSON
@@ -270,7 +285,7 @@ class Minesweeper:
             data = {key: entry.get() for key, entry in entries.items()}
 
             # Guardar datos en JSON
-            with open('config.json', 'w') as f:
+            with open(self.configPath, 'w') as f:
                 Adds.debug("Escribiendo json...")
                 json.dump(data, f, indent=4)
             
@@ -414,7 +429,7 @@ class Minesweeper:
         if self.logged:
             self.statsWindow = ctk.CTkToplevel(self.root)
             self.statsWindow.title("Estadísticas")
-            self.statsWindow.geometry("400x400")
+            self.statsWindow.geometry("400x450")
             self.statsWindow.configure(fg_color=self.windowColor)
 
             stats = DataStadistics.getStatPerUser(self.file_path, self.player.get())
@@ -455,6 +470,14 @@ class Minesweeper:
                     flags_used_label.configure(text=f"Banderas usadas: {stat['flagsUsed']}")
                 winnedGraph.set((self.winnedGames / (self.losedGames + self.winnedGames)) * 100)
             
+            def deleteAccount():
+                msg = CTkMessagebox(title="Exit?", message="Do you want to close the program?"
+                                    ,icon="question", option_1="Cancel", option_2="No", option_3="Yes",
+                                    button_color=self.UIbuttonColor, button_text_color=self.buttonFgColor, button_hover_color=self.buttonHoverColor)
+                response = msg.get()
+                if response=="Yes":
+                    DataStadistics.removeUser(self.file_path,self.usersPath,self.player.get())
+            
             winnedGraph = RadialProgressbar(self.statsWindow, size=75, font_size_ratio=0.2 )
             winnedGraph.place(x = 300,y = 270)
 
@@ -462,6 +485,9 @@ class Minesweeper:
 
             self.update_button = ctk.CTkButton(self.statsWindow, text="Actualizar", command=update, fg_color=self.UIbuttonColor, text_color=self.buttonFgColor, hover_color=self.buttonHoverColor)
             self.update_button.grid(row=7, column=0, columnspan=7, pady=10)
+            
+            self.deleteAccountButton = ctk.CTkButton(self.statsWindow, text="Borrar cuenta", command=deleteAccount, fg_color=self.UIbuttonColor, text_color=self.buttonFgColor, hover_color=self.buttonHoverColor)
+            self.deleteAccountButton.grid(row=7, column=1, columnspan=7, pady=10)
         else:
             self.loginWindow = ctk.CTkToplevel(self.root)
             self.loginWindow.title("Registro / Inicio de sesión")
@@ -476,18 +502,20 @@ class Minesweeper:
                     return
                 
                 users = {}
-                if os.path.exists("users.json"):
-                    with open("users.json", 'r') as file:
+                if os.path.exists(self.usersPath):
+                    with open(self.usersPath, 'r') as file:
                         try:
                             users = json.load(file)
                         except json.JSONDecodeError:
                             Adds.warning("Error al decodificar el archivo users.json.")
-                
+                if not os.path.exists(self.usersPath):
+                    Adds.warning("El archivo no existe.\n"
+                                 f"Directorio del archivo que intenta acceder: {self.usersPath}")
                 if username in users:
                     Adds.warning("El usuario ya está registrado.")
                 else:
                     users[username] = password
-                    with open("users.json", 'w') as file:
+                    with open(self.usersPath, 'w') as file:
                         json.dump(users, file, indent=4)
                     Adds.debug(f"Usuario {username} registrado correctamente.")
                     self.loginWindow.destroy()
@@ -500,12 +528,14 @@ class Minesweeper:
                     return
                 
                 users = {}
-                if os.path.exists("users.json"):
-                    with open("users.json", 'r') as file:
+                if os.path.exists(self.usersPath):
+                    with open(self.usersPath, 'r') as file:
                         try:
                             users = json.load(file)
                         except json.JSONDecodeError:
                             Adds.warning("Error al decodificar el archivo users.json.")
+                Adds.warning("El archivo no existe.\n"
+                                 f"Directorio del archivo que intenta acceder: {self.usersPath}")
                 
                 if username in users and users[username] == password:
                     Adds.debug(f"Usuario {username} ha iniciado sesión correctamente.")
@@ -537,6 +567,7 @@ class Minesweeper:
         self.optionsWindow.title("Opciones")
         self.optionsWindow.geometry("350x250")
         self.optionsWindow.configure(fg_color=self.windowColor)
+        previousName = self.player.get()
 
         options = ["Easy", "Normal", "Hard", "Imposible"]
         selectedOption = StringVar(self.optionsWindow)
@@ -548,9 +579,12 @@ class Minesweeper:
 
         self.entry = ctk.CTkEntry(self.optionsWindow, width=250, textvariable=self.player, fg_color=self.entryColor)
         self.entry.grid(row=0, column=0, columnspan=2, padx=20, pady=20)
+        if not self.logged:
+            self.entry.configure(state="disabled")
 
         def applyInput():
             input_text = self.entry.get()
+            DataStadistics.changeName(self.file_path, self.usersPath, previousName, self.player.get())
             messagebox.showinfo("Options changed", "Los valores se ajustaron correctamente.")
 
         applyButton = ctk.CTkButton(self.optionsWindow, text="Aplicar", command=applyInput, fg_color=self.UIbuttonColor, hover_color=self.buttonHoverColor)
@@ -1058,7 +1092,6 @@ if __name__ == "__main__" and os.path.isfile("img/coconut/coconut.jpeg"):
     except Exception as e:
         # Si se captura un error no manejado en el nivel superior
         traceback_info = traceback.format_exc()
-        Adds.critical(f"Error no manejado: {e}")
-        Adds.critical(f"Traceback:\n{traceback_info}")
+        Adds.critical(f"Error no manejado: {e}\n Traceback:{traceback_info}")
 else:
     messagebox.showerror("Error", "Hubo un error fatal debido a la falta de un archivo esencial para la ejecucion.") 

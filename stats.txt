@@ -1,3 +1,0 @@
-username,score,difficulty
-Easy,20,Easy
-Imposible,37,Imposible

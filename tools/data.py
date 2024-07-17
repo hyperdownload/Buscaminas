@@ -4,8 +4,8 @@ import os
 import json
 import tkinter as tk
 from tkinter import ttk
-from utils import *
-from images import *
+from tools.utils import *
+from tools.images import *
 try:
     from colorama import init as colorama_init
     from colorama import Fore
@@ -38,6 +38,52 @@ class DataStadistics:
         except json.JSONDecodeError:
             Adds.warning(f"Error al decodificar el archivo {file_path}.")
             return []
+        
+    @staticmethod
+    def saveJson(file_path, data):
+        """
+        Guarda los datos en un archivo JSON.
+        
+        :param file_path: Ruta del archivo JSON.
+        :param data: Datos a guardar en el archivo JSON.
+        """
+        with open(file_path, 'w') as file:
+            json.dump(data, file, indent=4)
+
+    @staticmethod
+    def deleteUsername(file_path, username):
+        """
+        Elimina una entrada del JSON dado un nombre de usuario.
+        
+        :param file_path: Ruta del archivo JSON.
+        :param username: Nombre de usuario a eliminar.
+        :return: Mensaje indicando si la entrada fue eliminada o no se encontró.
+        """
+        data = DataStadistics.getStats(file_path)
+        if username in data:
+            del data[username]
+            DataStadistics.saveJson(file_path, data)
+            return f"Entry '{username}' deleted successfully."
+        else:
+            return f"Entry '{username}' not found."
+
+    @staticmethod
+    def renameUsername(file_path, old_username, new_username):
+        """
+        Renombra una clave en el JSON.
+        
+        :param file_path: Ruta del archivo JSON.
+        :param old_username: Nombre de usuario actual.
+        :param new_username: Nuevo nombre de usuario.
+        :return: Mensaje indicando si la clave fue renombrada o no se encontró.
+        """
+        data = DataStadistics.getStats(file_path)
+        if old_username in data:
+            data[new_username] = data.pop(old_username)
+            DataStadistics.saveJson(file_path, data)
+            return f"Entry '{old_username}' renamed to '{new_username}' successfully."
+        else:
+            return f"Entry '{old_username}' not found."
 
     @staticmethod
     def getStatPerUser(file_path, username):
@@ -149,11 +195,12 @@ class DataStadistics:
         DataStadistics.saveStats(file_path, unique_stats)
     
     @staticmethod
-    def changeName(file_path, previousName, newName):
+    def changeName(file_path, usersPath, previousName, newName):
         """
         Cambia el nombre de un usuario existente en el archivo JSON.
 
         :param file_path: Ruta del archivo JSON.
+        :param usersPath: Ruta del archivo JSON de usuarios.
         :param previousName: Nombre anterior del usuario.
         :param newName: Nuevo nombre del usuario.
         """
@@ -169,9 +216,10 @@ class DataStadistics:
             DataStadistics.saveStats(file_path, stats)
         else:
             Adds.warning(f"Usuario {previousName} no encontrado.")
+        DataStadistics.renameUsername(usersPath, previousName, newName)
 
     @staticmethod
-    def removeUser(file_path, username):
+    def removeUser(file_path, usersPath, username):
         """
         Elimina un usuario específico del archivo JSON.
 
@@ -185,6 +233,8 @@ class DataStadistics:
             Adds.warning(f"Usuario {username} no encontrado.")
         else:
             DataStadistics.saveStats(file_path, new_stats)
+        DataStadistics.deleteUsername(usersPath, username)
+        
 class Data:
     def getStats(file_path):
         """
@@ -435,23 +485,26 @@ class Adds:
         list = ["JAJAJJAJAAJAJAJAJJAAJAJAJ.", "Capaz este no sea tu juego.", "Sos como adriel pero peor.", "Deberias comprarte unas manos.",
                 "Sos mas malo que patear una embarazada.", "Buscate otro juego.", "El que pierde es ga- PARAAA NI TERMINE."]
         return random.choice(list)
-    def debug(text)->None:
+    def debug(*allText)->None:
         """
             Solo es un print pero con un mensaje mas marcado para identificar el tipo de mensaje.
         :param text: String
         """
         colorama_init()
-        print(f"{Fore.YELLOW}[DEBUG] {Fore.WHITE}{text}{Style.RESET_ALL}")
-    def warning(text)->None:
+        for text in allText:
+            print(f"{Fore.YELLOW}[DEBUG] {Fore.WHITE}{text}{Style.RESET_ALL}")
+    def warning(*allText)->None:
         """
             Solo es un print pero con un mensaje mas marcado para identificar el tipo de mensaje.
         :param text: String
         """
         colorama_init()
-        print(f"{Fore.RED}[WARNING] {Fore.WHITE}{text}{Style.RESET_ALL}")
-    def critical(text)->None:
+        for text in allText:
+            print(f"{Fore.RED}[WARNING] {Fore.WHITE}{text}{Style.RESET_ALL}")
+    def critical(*allText)->None:
         colorama_init()
-        print(f"{Fore.RED}[FATAL] {Fore.WHITE}{text}{Style.RESET_ALL}")
+        for text in allText:
+            print(f"{Fore.RED}[FATAL] {Fore.WHITE}{text}{Style.RESET_ALL}")
         
 class RadialProgressbar(tk.Frame):
     """create radial flat progressbar
