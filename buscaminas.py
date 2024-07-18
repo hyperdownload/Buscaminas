@@ -128,6 +128,7 @@ class Minesweeper:
         self.timeInicio = time.time()  # Almacena el tiempo de inicio del juego
         self.time_actual = 0
         self.flags = 0  # Inicializa el contador de banderas en 0
+        self.fadeBox = 1
         self.bombs = []  # Crea una lista para almacenar las bombas
         
         self.root.config(bg=self.windowColor)
@@ -262,7 +263,7 @@ class Minesweeper:
         """
         result = CTkMessagebox(title="Aplicar cambios", message="Para que los cambios se reflejen se debe reiniciar la aplicacion. Quiere continuar?"
                                     ,icon="warning", option_1="Si", option_2="No",
-                                    button_color=self.UIbuttonColor, button_text_color=self.buttonFgColor, button_hover_color=self.buttonHoverColor)
+                                    button_color=self.UIbuttonColor, button_text_color=self.buttonFgColor, button_hover_color=self.buttonHoverColor, fade_in_duration=self.fadeBox)
         if result.get()=="Si":
             Adds.debug("Guardando configuración")
 
@@ -478,7 +479,7 @@ class Minesweeper:
             def deleteAccount():
                 msg = CTkMessagebox(title="Borrar cuenta :D", message="Estas seguro de que quieres borrar la cuenta? :D"
                                     ,icon="warning", option_1="Cancel", option_2="No", option_3="Si",
-                                    button_color=self.UIbuttonColor, button_text_color=self.buttonFgColor, button_hover_color=self.buttonHoverColor)
+                                    button_color=self.UIbuttonColor, button_text_color=self.buttonFgColor, button_hover_color=self.buttonHoverColor, fade_in_duration=self.fadeBox)
                 response = msg.get()
                 if response=="Si":
                     DataStadistics.removeUser(self.file_path,self.usersPath,self.player.get())
@@ -601,7 +602,7 @@ class Minesweeper:
             DataStadistics.changeName(self.file_path, self.usersPath, previousName, self.player.get())
             CTkMessagebox(title="Opciones cambiadas", message="Los valores se ajustaron correctamente."
                                     ,icon="check", 
-                                    button_color=self.UIbuttonColor, button_text_color=self.buttonFgColor, button_hover_color=self.buttonHoverColor)
+                                    button_color=self.UIbuttonColor, button_text_color=self.buttonFgColor, button_hover_color=self.buttonHoverColor, fade_in_duration=self.fadeBox)
 
         applyButton = ctk.CTkButton(self.optionsWindow, text="Aplicar", command=applyInput, fg_color=self.UIbuttonColor, hover_color=self.buttonHoverColor)
         applyButton.place(x=35,y=210)
@@ -715,7 +716,7 @@ class Minesweeper:
             self.timeHabilited = False  # Deshabilita el tiempo
             CTkMessagebox(title="VICTORIAAAAA", message="GANASTE PAAAAAAAAAAA."
                                     ,icon="check", 
-                                    button_color=self.UIbuttonColor, button_text_color=self.buttonFgColor, button_hover_color=self.buttonHoverColor)  # Muestra un mensaje de victoria
+                                    button_color=self.UIbuttonColor, button_text_color=self.buttonFgColor, button_hover_color=self.buttonHoverColor, fade_in_duration=self.fadeBox)  # Muestra un mensaje de victoria
             self.resetGame()  # Reinicia el juego
 
     def setFlags(self, flags)->None:
@@ -773,9 +774,10 @@ class Minesweeper:
             self.timeHabilited = False  # Deshabilita el tiempo
             self.pressedBombs += 1
             self.losedGames += 1
-            CTkMessagebox(title="Game Over", message=Adds.randomOverText(), 
-                                    button_color=self.UIbuttonColor, button_text_color=self.buttonFgColor, button_hover_color=self.buttonHoverColor)
-            self.resetGame()  # Reinicia el juego
+            a=CTkMessagebox(title="Game Over", message=Adds.randomOverText(), 
+                                    button_color=self.UIbuttonColor, button_text_color=self.buttonFgColor, button_hover_color=self.buttonHoverColor, fade_in_duration=self.fadeBox)
+            if a.get() == "OK":
+                self.resetGame()  # Reinicia el juego
 
     def shakeWindow(self, intensity, duration=2000)->None:
         """

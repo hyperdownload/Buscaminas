@@ -418,20 +418,22 @@ class CTkMessagebox(customtkinter.CTkToplevel):
         return self.ICONS[icon]
         
     def fade_in(self):
-        for i in range(0,110,10):
-            if not self.winfo_exists():
-                break
-            self.attributes("-alpha", i/100)
-            self.update()
-            time.sleep(1/self.fade)
-            
+        self._fade(0, 1, 10)
+
     def fade_out(self):
-        for i in range(100,0,-10):
-            if not self.winfo_exists():
-                break
-            self.attributes("-alpha", i/100)
-            self.update()
-            time.sleep(1/self.fade)
+        self._fade(1, 0, -10)
+
+    def _fade(self, start, end, step):
+        if not self.winfo_exists():
+            return
+        
+        alpha = self.attributes("-alpha")
+        alpha += step / 100.0
+        if (step > 0 and alpha >= end) or (step < 0 and alpha <= end):
+            self.attributes("-alpha", end)
+        else:
+            self.attributes("-alpha", alpha)
+            self.after(int(1000 / self.fade), self._fade, start, end, step)
 
     def get(self):
         if self.winfo_exists():

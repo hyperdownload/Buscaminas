@@ -3,18 +3,18 @@
         "username": "Player",
         "score": 0,
         "difficulty": 40,
-        "bombsPressed": 2,
+        "bombsPressed": 1,
         "winnedGames": 0,
-        "gameLosses": 2,
-        "flagsUsed": 4
+        "gameLosses": 1,
+        "flagsUsed": 0
     },
     {
         "username": "a",
         "score": 0,
         "difficulty": 40,
-        "bombsPressed": 21,
+        "bombsPressed": 22,
         "winnedGames": 11,
-        "gameLosses": 21,
+        "gameLosses": 22,
         "flagsUsed": 4
     }
 ]
