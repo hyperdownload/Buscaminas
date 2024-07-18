@@ -55,7 +55,8 @@ class ModManager:
         except Exception as e:
             Adds.warning("Hubo un error en el constructor de ModLoader, mas informacion:\n"
             f"{e}")
-            messagebox.showerror("Error", "Hubo un error cargando los mods debido a un error o incompatibilidad en el mod, se iniciara en vanilla.")
+            CTkMessagebox(title="Error", message="Hubo un error cargando los mods debido a un error o incompatibilidad en el mod, se iniciara en vanilla."
+                                    ,icon="cancel")
 
     def load_mods(self)->None:
         Adds.debug("Cargando mods...")
@@ -91,6 +92,7 @@ class Minesweeper:
         >>> game = Game(root)
         # Inicializa el juego con la ventana principal 'root'.
         """
+
         # Variables de personalizacion grafica
         self.settings = {
             'buttonColor': '#000000',
@@ -258,8 +260,10 @@ class Minesweeper:
 
         No retorna ningún valor.
         """
-        result = messagebox.askyesno("Confirmar", "Para aplicar los cambios se reiniciará la aplicación.")
-        if result:
+        result = CTkMessagebox(title="Aplicar cambios", message="Para que los cambios se reflejen se debe reiniciar la aplicacion. Quiere continuar?"
+                                    ,icon="warning", option_1="Si", option_2="No",
+                                    button_color=self.UIbuttonColor, button_text_color=self.buttonFgColor, button_hover_color=self.buttonHoverColor)
+        if result.get()=="Si":
             Adds.debug("Guardando configuración")
 
             # Definir un diccionario con las entradas de color y sus atributos correspondientes
@@ -373,12 +377,12 @@ class Minesweeper:
                 setattr(self, attr_name, entry)
 
                 # Botón para seleccionar color
-                color_button = ctk.CTkButton(interiorFrame, text="Elegir color", command=lambda e=entry: self.choose_color(e), fg_color=self.UIbuttonColor, text_color=self.buttonFgColor)
+                color_button = ctk.CTkButton(interiorFrame, text="Elegir color", command=lambda e=entry: self.choose_color(e), fg_color=self.UIbuttonColor, text_color=self.buttonFgColor, hover_color=self.buttonHoverColor)
                 color_button.grid(column=2, row=row, padx=10, pady=10)
 
                 row += 1
 
-        save_button = ctk.CTkButton(interiorFrame, text="Guardar", command=self.saveSettings, fg_color=self.UIbuttonColor, text_color=self.buttonFgColor)
+        save_button = ctk.CTkButton(interiorFrame, text="Guardar", command=self.saveSettings, fg_color=self.UIbuttonColor, text_color=self.buttonFgColor, hover_color=self.buttonHoverColor)
         save_button.grid(column=1, row=row, pady=20)
 
         interiorFrame.update_idletasks()
@@ -462,32 +466,41 @@ class Minesweeper:
                 stats = DataStadistics.getStatPerUser(self.file_path, self.player.get())
                 for i, stat in enumerate(stats):
                     username_label.configure(text=f"Usuario: {stat['username']}")
-                    score_label.configure(text=f"Tiempo: {stat['score']}")
-                    difficulty_label.configure(text=f"Dificultad: {stat['difficulty']}")
+                    #score_label.configure(text=f"Tiempo: {stat['score']}")
+                    #difficulty_label.configure(text=f"Dificultad: {stat['difficulty']}")
                     bombs_pressed_label.configure(text=f"Bombas presionadas: {stat['bombsPressed']}")
                     winned_games_label.configure(text=f"Juegos ganados: {stat['winnedGames']}")
                     game_losses_label.configure(text=f"Juegos perdidos: {stat['gameLosses']}")
                     flags_used_label.configure(text=f"Banderas usadas: {stat['flagsUsed']}")
-                winnedGraph.set((self.winnedGames / (self.losedGames + self.winnedGames)) * 100)
-            
+                    
+                winnedGraph.set(round((self.winnedGames / (self.losedGames + self.winnedGames)) * 100))
+                lossedGraph.set(round((self.losedGames / (self.losedGames + self.winnedGames)) * 100))
             def deleteAccount():
-                msg = CTkMessagebox(title="Exit?", message="Do you want to close the program?"
-                                    ,icon="question", option_1="Cancel", option_2="No", option_3="Yes",
+                msg = CTkMessagebox(title="Borrar cuenta :D", message="Estas seguro de que quieres borrar la cuenta? :D"
+                                    ,icon="warning", option_1="Cancel", option_2="No", option_3="Si",
                                     button_color=self.UIbuttonColor, button_text_color=self.buttonFgColor, button_hover_color=self.buttonHoverColor)
                 response = msg.get()
-                if response=="Yes":
+                if response=="Si":
                     DataStadistics.removeUser(self.file_path,self.usersPath,self.player.get())
+                    self.player.set("Player")
+                    self.logged = False
+                    self.statsWindow.destroy()
             
             winnedGraph = RadialProgressbar(self.statsWindow, size=75, font_size_ratio=0.2 )
-            winnedGraph.place(x = 300,y = 270)
+            winnedGraph.place(x = 300,y = 120)
 
-            winnedGraph.set((self.winnedGames / (self.losedGames + self.winnedGames)) * 100)
+            winnedGraph.set(round((self.winnedGames / (self.losedGames + self.winnedGames)) * 100))
+            
+            lossedGraph = RadialProgressbar(self.statsWindow, size=75, font_size_ratio=0.2 )
+            lossedGraph.place(x = 300,y = 210)
+
+            lossedGraph.set(round((self.losedGames / (self.losedGames + self.winnedGames)) * 100))
 
             self.update_button = ctk.CTkButton(self.statsWindow, text="Actualizar", command=update, fg_color=self.UIbuttonColor, text_color=self.buttonFgColor, hover_color=self.buttonHoverColor)
             self.update_button.grid(row=7, column=0, columnspan=7, pady=10)
             
             self.deleteAccountButton = ctk.CTkButton(self.statsWindow, text="Borrar cuenta", command=deleteAccount, fg_color=self.UIbuttonColor, text_color=self.buttonFgColor, hover_color=self.buttonHoverColor)
-            self.deleteAccountButton.grid(row=7, column=1, columnspan=7, pady=10)
+            self.deleteAccountButton.grid(row=7, column=8, pady=10)
         else:
             self.loginWindow = ctk.CTkToplevel(self.root)
             self.loginWindow.title("Registro / Inicio de sesión")
@@ -534,7 +547,8 @@ class Minesweeper:
                             users = json.load(file)
                         except json.JSONDecodeError:
                             Adds.warning("Error al decodificar el archivo users.json.")
-                Adds.warning("El archivo no existe.\n"
+                if not os.path.exists(self.usersPath):
+                    Adds.warning("El archivo no existe.\n"
                                  f"Directorio del archivo que intenta acceder: {self.usersPath}")
                 
                 if username in users and users[username] == password:
@@ -585,7 +599,9 @@ class Minesweeper:
         def applyInput():
             input_text = self.entry.get()
             DataStadistics.changeName(self.file_path, self.usersPath, previousName, self.player.get())
-            messagebox.showinfo("Options changed", "Los valores se ajustaron correctamente.")
+            CTkMessagebox(title="Opciones cambiadas", message="Los valores se ajustaron correctamente."
+                                    ,icon="check", 
+                                    button_color=self.UIbuttonColor, button_text_color=self.buttonFgColor, button_hover_color=self.buttonHoverColor)
 
         applyButton = ctk.CTkButton(self.optionsWindow, text="Aplicar", command=applyInput, fg_color=self.UIbuttonColor, hover_color=self.buttonHoverColor)
         applyButton.place(x=35,y=210)
@@ -697,7 +713,9 @@ class Minesweeper:
         if buttons_discovered == total_safe_buttons:
             self.winnedGames+=1
             self.timeHabilited = False  # Deshabilita el tiempo
-            messagebox.showinfo("Victory", "¡Has ganado el juego!")  # Muestra un mensaje de victoria
+            CTkMessagebox(title="VICTORIAAAAA", message="GANASTE PAAAAAAAAAAA."
+                                    ,icon="check", 
+                                    button_color=self.UIbuttonColor, button_text_color=self.buttonFgColor, button_hover_color=self.buttonHoverColor)  # Muestra un mensaje de victoria
             self.resetGame()  # Reinicia el juego
 
     def setFlags(self, flags)->None:
@@ -755,7 +773,8 @@ class Minesweeper:
             self.timeHabilited = False  # Deshabilita el tiempo
             self.pressedBombs += 1
             self.losedGames += 1
-            messagebox.showinfo("Game Over", Adds.randomOverText())  # Muestra un mensaje de "Game Over"
+            CTkMessagebox(title="Game Over", message=Adds.randomOverText(), 
+                                    button_color=self.UIbuttonColor, button_text_color=self.buttonFgColor, button_hover_color=self.buttonHoverColor)
             self.resetGame()  # Reinicia el juego
 
     def shakeWindow(self, intensity, duration=2000)->None:
